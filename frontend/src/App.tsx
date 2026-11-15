@@ -113,7 +113,7 @@ export default function App() {
       <LocationPromptModal />
 
       {showFooter && <Footer />}
-      <MobileBottomNav />
+      {!isDedicatedChatPage && <MobileBottomNav />}
     </div>
   )
 }

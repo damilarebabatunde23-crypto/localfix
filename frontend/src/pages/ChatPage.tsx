@@ -219,6 +219,14 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping])
 
+  // Keep selected thread synced with Zustand store
+  useEffect(() => {
+    const thread = threads.find((t) => t.id === selectedThreadId) || threads[0]
+    if (thread && thread.user) {
+      useChatStore.getState().openChat(thread.user, thread.id.startsWith('thread-') ? undefined : thread.id)
+    }
+  }, [selectedThreadId, threads])
+
   const handleSendMessage = async (textToSend?: string, mediaUrl?: string, mediaType = 'text') => {
     const content = textToSend ?? input
     if (!content.trim() && !mediaUrl) return
@@ -264,7 +272,7 @@ export default function ChatPage() {
   )
 
   return (
-    <div className="flex bg-[#0f0b1a] text-white overflow-hidden" style={{ height: 'calc(100vh - 60px)' }}>
+    <div className="flex bg-[#0f0b1a] text-white overflow-hidden h-[calc(100dvh-64px)] w-full">
       {/* ======================================================== */}
       {/* 1. LEFT SIDEBAR: Facebook Messenger Conversations List   */}
       {/* ======================================================== */}
@@ -274,9 +282,16 @@ export default function ChatPage() {
         } w-full md:w-80 lg:w-96 flex-col border-r border-primary-500/15 flex-shrink-0 bg-[#151025]`}
       >
         {/* Top Header */}
-        <div className="p-4 border-b border-white/5 flex items-center justify-between">
+        <div className="p-3.5 sm:p-4 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-black text-white tracking-tight">Chats</h1>
+            <button
+              onClick={() => navigate('/')}
+              className="md:hidden p-1.5 -ml-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+              title="Return to Home"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg sm:text-xl font-black text-white tracking-tight">Chats</h1>
             <span className="lf-badge-purple text-[10px] font-semibold">Messenger</span>
           </div>
           <button
@@ -675,7 +690,7 @@ export default function ChatPage() {
 
         {/* Facebook-style Bottom Input Bar */}
         <div
-          className="p-3 flex items-center gap-2 flex-shrink-0"
+          className="p-2 sm:p-3 pb-3 sm:pb-3 flex items-center gap-1.5 sm:gap-2 flex-shrink-0 safe-area-inset-bottom"
           style={{
             background: 'rgba(23, 18, 38, 0.98)',
             borderTop: '1px solid rgba(167, 139, 250, 0.15)',

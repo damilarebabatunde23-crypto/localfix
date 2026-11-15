@@ -109,7 +109,7 @@ export default function FacebookChatDock() {
   }
 
   return (
-    <div className="fixed bottom-0 right-4 sm:right-6 z-50 select-none">
+    <div className="fixed bottom-20 sm:bottom-0 right-3 sm:right-6 z-50 select-none">
       <AnimatePresence mode="wait">
         {/* ======================================================== */}
         {/* MINIMIZED STATE: Facebook Messenger Chat Head Bubble    */}
@@ -121,7 +121,7 @@ export default function FacebookChatDock() {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.6, opacity: 0, y: 20 }}
             onClick={toggleMinimize}
-            className="mb-4 flex items-center gap-3 px-3 py-2 rounded-full cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-2xl"
+            className="mb-1 sm:mb-4 flex items-center gap-2 sm:gap-3 px-3 py-2 rounded-full cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-2xl"
             style={{
               background: 'linear-gradient(135deg, rgba(30, 21, 51, 0.98), rgba(46, 27, 85, 0.98))',
               border: '1.5px solid rgba(167, 139, 250, 0.4)',
@@ -135,7 +135,7 @@ export default function FacebookChatDock() {
                   `https://api.dicebear.com/7.x/avataaars/svg?seed=${activeContact?.name || 'Artisan'}&backgroundColor=6D28D9`
                 }
                 alt={activeContact?.name}
-                className="w-10 h-10 rounded-full object-cover border-2 border-primary-400"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-primary-400"
               />
               <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#1c1630]" />
               {unreadTotal > 0 && (
@@ -165,7 +165,7 @@ export default function FacebookChatDock() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="w-[340px] sm:w-[380px] h-[500px] max-h-[85vh] rounded-t-2xl flex flex-col overflow-hidden shadow-2xl"
+            className="w-[calc(100vw-1.5rem)] sm:w-[380px] h-[480px] max-h-[75vh] sm:max-h-[85vh] rounded-2xl sm:rounded-t-2xl sm:rounded-b-none flex flex-col overflow-hidden shadow-2xl"
             style={{
               background: 'linear-gradient(180deg, #18132b 0%, #120e22 100%)',
               border: '1.5px solid rgba(167, 139, 250, 0.25)',

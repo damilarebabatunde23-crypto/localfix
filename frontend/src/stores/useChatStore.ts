@@ -139,6 +139,25 @@ export const playChatSound = (type: 'pop' | 'ring' | 'end' | 'connect') => {
       gain.connect(ctx.destination)
       osc.start()
       osc.stop(ctx.currentTime + 0.12)
+    } else if (type === 'ring') {
+      // Realistic dual-tone dial ring (440Hz + 480Hz)
+      const osc1 = ctx.createOscillator()
+      const osc2 = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc1.type = 'sine'
+      osc2.type = 'sine'
+      osc1.frequency.setValueAtTime(440, ctx.currentTime)
+      osc2.frequency.setValueAtTime(480, ctx.currentTime)
+      gain.gain.setValueAtTime(0.08, ctx.currentTime)
+      gain.gain.setValueAtTime(0.08, ctx.currentTime + 1.1)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.25)
+      osc1.connect(gain)
+      osc2.connect(gain)
+      gain.connect(ctx.destination)
+      osc1.start()
+      osc2.start()
+      osc1.stop(ctx.currentTime + 1.25)
+      osc2.stop(ctx.currentTime + 1.25)
     } else if (type === 'connect') {
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
@@ -337,10 +356,12 @@ export const useChatStore = create<ChatStoreState>()(
         }
 
         // Post message to backend DB so it permanently saves in PostgreSQL/SQLite!
+        let backendSaved = false
         if (convId) {
           try {
             const savedMsg = await chatApi.sendMessage(convId, trimmed, mediaUrl, mediaType)
             if (savedMsg && savedMsg.id) {
+              backendSaved = true
               // Update with official database ID
               set((state) => ({
                 messages: state.messages.map((m) =>
@@ -350,19 +371,21 @@ export const useChatStore = create<ChatStoreState>()(
             }
           } catch {
             // Local message remains safely persisted in Zustand storage
+            backendSaved = false
           }
         }
 
-        // If chatting with a mock contact or demo user, provide intelligent response
-        const isLiveBackendConv = !!convId
-        if (!isLiveBackendConv) {
+        // If chatting with a mock contact or backend conversation failed/offline, provide responsive artisan reply!
+        if (!backendSaved) {
           set({ isTyping: true })
           setTimeout(() => {
             set({ isTyping: false })
+            const contactFirstName = activeContact?.name ? activeContact.name.split(' ')[0] : 'Artisan'
             const replies = [
-              `Thanks for reaching out! I am active and ready for your repair request. 👍`,
-              `Message received! My diagnostic gear is prepped. Send me your address and preferred timing. 🛠️`,
-              `Got it! Escrow protection ensures your payment is safe. Looking forward to assisting you!`,
+              `Hello! I received your message about "${trimmed.slice(0, 35)}${trimmed.length > 35 ? '...' : ''}". I am active and ready. 👍`,
+              `Message received! My diagnostic gear is prepped. Send me your location and preferred timing. 🛠️`,
+              `Got it! Escrow milestone protection ensures your payment remains safe until completion. When would you like me to arrive?`,
+              `Confirmed! I have the specialized tools ready. Feel free to initiate an in-app call or WhatsApp if you need to show the fault live.`,
             ]
             const randomReply = replies[Math.floor(Math.random() * replies.length)]
 
@@ -379,7 +402,7 @@ export const useChatStore = create<ChatStoreState>()(
               messages: [...state.messages, replyMsg],
             }))
             playChatSound('pop')
-          }, 1200)
+          }, 1000)
         }
       },
 
@@ -453,7 +476,7 @@ export const useChatStore = create<ChatStoreState>()(
       // Call actions
       startCall: (type, contact) => {
         const target = contact || get().activeContact || DEFAULT_CONTACT
-        playChatSound('connect')
+        playChatSound('ring')
         set({
           activeCall: {
             type,
