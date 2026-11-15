@@ -146,6 +146,28 @@ export default function AuthPage() {
   const [googleClientId, setGoogleClientIdState] = useState<string>(getGoogleClientId())
   const [googleSdkReady, setGoogleSdkReady] = useState(false)
   const [showCustomGoogleInput, setShowCustomGoogleInput] = useState(false)
+  const [recentGoogleAccounts, setRecentGoogleAccounts] = useState<
+    Array<{ name: string; email: string; avatar?: string; role?: string }>
+  >(() => {
+    try {
+      const raw = localStorage.getItem('localfix_recent_google_accounts')
+      return raw ? JSON.parse(raw) : []
+    } catch {
+      return []
+    }
+  })
+
+  const saveRecentGoogleAccount = (acc: { email: string; name: string; avatar?: string; role?: string }) => {
+    try {
+      const key = 'localfix_recent_google_accounts'
+      const raw = localStorage.getItem(key)
+      const list = raw ? JSON.parse(raw) : []
+      const filtered = list.filter((a: any) => a.email.toLowerCase() !== acc.email.toLowerCase())
+      const updated = [{ ...acc, email: acc.email.toLowerCase() }, ...filtered].slice(0, 5)
+      localStorage.setItem(key, JSON.stringify(updated))
+      setRecentGoogleAccounts(updated)
+    } catch {}
+  }
 
   // Real-life Worker / Employee onboarding fields
   const [categories, setCategories] = useState<CategoryOption[]>(DEFAULT_CATEGORIES)
@@ -523,6 +545,15 @@ export default function AuthPage() {
         useAppStore.getState().setUser(res.user)
         useAppStore.getState().setAccessToken(res.tokens.access)
         localStorage.setItem('localfix-refresh', res.tokens.refresh)
+
+        // Dynamically remember this Google account on this device
+        const userFullName = `${res.user.first_name || ''} ${res.user.last_name || ''}`.trim() || data.email?.split('@')[0] || 'Google User'
+        saveRecentGoogleAccount({
+          name: userFullName,
+          email: res.user.email,
+          avatar: res.user.avatar || res.user.avatar_url || data.avatar_url,
+          role: res.user.role,
+        })
 
         if (res.is_new_user) {
           toast.success(`🎉 Welcome ${res.user.first_name}! Account created directly with Google.`, { duration: 4500 })
@@ -1639,86 +1670,91 @@ export default function AuthPage() {
                 </div>
               </div>
 
-              {/* Google Account List (1-Click Selection) */}
-              <div className="space-y-2 pt-1">
-                {[
-                  { name: 'Damilare Babatunde', email: 'damilarebabatunde23@gmail.com', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face' },
-                  { name: 'Opeyemi Alao', email: 'alaoopeyemi740@gmail.com', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face' },
-                  { name: 'Opeyemi Bamigbola', email: 'opeyemibamigbola45@gmail.com', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face' },
-                ].map((account) => (
-                  <button
-                    key={account.email}
-                    type="button"
-                    disabled={googleLoading}
-                    onClick={() => handleGoogleSubmit(account.email, account.name, googleRole)}
-                    className="w-full p-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/40 flex items-center justify-between text-left transition-all cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <img src={account.avatar} alt={account.name} className="w-10 h-10 rounded-full object-cover border border-white/20" />
-                      <div>
-                        <div className="text-xs font-bold text-white group-hover:text-blue-300 transition-colors">{account.name}</div>
-                        <div className="text-[11px] text-gray-400">{account.email}</div>
-                      </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
-                  </button>
-                ))}
-
-                {/* Use Another Google Account Toggle */}
-                {!showCustomGoogleInput ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowCustomGoogleInput(true)}
-                    className="w-full p-3 rounded-2xl bg-white/[0.02] hover:bg-white/5 border border-dashed border-white/15 hover:border-white/25 flex items-center gap-3 text-left transition-all text-xs text-gray-300 font-semibold cursor-pointer"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400">
-                      <User className="w-4 h-4" />
-                    </div>
-                    <span>Use another Google account</span>
-                  </button>
-                ) : (
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault()
-                      handleGoogleSubmit(googleEmailInput, googleNameInput, googleRole)
-                    }}
-                    className="p-4 rounded-2xl bg-white/5 border border-white/15 space-y-3"
-                  >
-                    <div className="text-xs font-bold text-white">Enter your Google Account email:</div>
-                    <input
-                      type="email"
-                      value={googleEmailInput}
-                      onChange={(e) => setGoogleEmailInput(e.target.value)}
-                      placeholder="yourname@gmail.com"
-                      required
-                      autoFocus
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-gray-500 outline-none focus:border-blue-400 text-xs transition-colors"
-                    />
-                    <input
-                      type="text"
-                      value={googleNameInput}
-                      onChange={(e) => setGoogleNameInput(e.target.value)}
-                      placeholder="Full Name (optional)"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-gray-500 outline-none focus:border-blue-400 text-xs transition-colors"
-                    />
-                    <div className="flex gap-2">
+              {/* Google Account List (1-Click Selection & Universal Email Sign-in) */}
+              <div className="space-y-3 pt-1">
+                {recentGoogleAccounts.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-[11px] font-semibold text-gray-400">Accounts on this device:</div>
+                    {recentGoogleAccounts.map((account) => (
                       <button
+                        key={account.email}
                         type="button"
-                        onClick={() => setShowCustomGoogleInput(false)}
-                        className="px-4 py-2 rounded-xl text-xs text-gray-400 hover:text-white bg-white/5"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
                         disabled={googleLoading}
-                        className="flex-1 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-colors shadow-glow"
+                        onClick={() => handleGoogleSubmit(account.email, account.name, (account.role as any) || googleRole)}
+                        className="w-full p-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/40 flex items-center justify-between text-left transition-all cursor-pointer group"
                       >
-                        {googleLoading ? 'Signing in...' : 'Sign in with this Google Account'}
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={
+                              account.avatar ||
+                              `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(account.name)}&backgroundColor=4285F4`
+                            }
+                            alt={account.name}
+                            className="w-10 h-10 rounded-full object-cover border border-white/20"
+                          />
+                          <div>
+                            <div className="text-xs font-bold text-white group-hover:text-blue-300 transition-colors">
+                              {account.name}
+                            </div>
+                            <div className="text-[11px] text-gray-400">{account.email}</div>
+                          </div>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
                       </button>
-                    </div>
-                  </form>
+                    ))}
+                  </div>
                 )}
+
+                {/* Universal Google Email Input Form (Works for Any Registered Google User!) */}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    handleGoogleSubmit(googleEmailInput, googleNameInput, googleRole)
+                  }}
+                  className="p-4 rounded-2xl bg-white/5 border border-white/15 space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white">Enter your Google Account email:</span>
+                    <span className="text-[10px] text-blue-300 bg-blue-900/40 border border-blue-500/30 px-2 py-0.5 rounded-full">
+                      All Google Users
+                    </span>
+                  </div>
+                  <input
+                    type="email"
+                    value={googleEmailInput}
+                    onChange={(e) => setGoogleEmailInput(e.target.value)}
+                    placeholder="e.g. yourname@gmail.com"
+                    required
+                    autoFocus
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-gray-500 outline-none focus:border-blue-400 text-xs transition-colors"
+                  />
+                  <input
+                    type="text"
+                    value={googleNameInput}
+                    onChange={(e) => setGoogleNameInput(e.target.value)}
+                    placeholder="Your Full Name (optional)"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-gray-500 outline-none focus:border-blue-400 text-xs transition-colors"
+                  />
+                  <button
+                    type="submit"
+                    disabled={googleLoading}
+                    className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-colors shadow-glow flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {googleLoading ? (
+                      'Authenticating with Google...'
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" viewBox="0 0 24 24">
+                          <path fill="#ffffff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                          <path fill="#ffffff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                          <path fill="#ffffff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                          <path fill="#ffffff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                        </svg>
+                        <span>Continue with this Google Account</span>
+                      </>
+                    )}
+                  </button>
+                </form>
               </div>
 
               {/* Google Security & Privacy Notice */}

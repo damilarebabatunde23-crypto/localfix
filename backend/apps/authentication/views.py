@@ -257,7 +257,30 @@ class GoogleAuthView(APIView):
                 user.avatar_url = avatar_url
             if not user.is_email_verified:
                 user.is_email_verified = True
+            if first_name and (not user.first_name or user.first_name == 'Google'):
+                user.first_name = first_name
+            if last_name and (not user.last_name or user.last_name == 'User'):
+                user.last_name = last_name
             user.save()
+
+            # If user has worker role, make sure their WorkerProfile exists
+            if user.role == 'worker' and not hasattr(user, 'worker_profile'):
+                try:
+                    from apps.services.models import WorkerProfile, ServiceCategory
+                    cat = ServiceCategory.objects.first()
+                    WorkerProfile.objects.get_or_create(
+                        user=user,
+                        defaults={
+                            'business_name': f"{user.first_name}'s Professional Engineering",
+                            'category': cat,
+                            'service_area': location_name,
+                            'hourly_rate': 15000,
+                            'years_experience': 3,
+                            'is_available': True
+                        }
+                    )
+                except Exception:
+                    pass
 
         refresh = RefreshToken.for_user(user)
         return Response({
