@@ -1,0 +1,31 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | LocalFix Control Hub{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'admin/css/localfix_admin.css' %}">
+{% endblock %}
+
+{% block branding %}
+<div id="site-name">
+  <a href="{% url 'admin:index' %}">
+    <span class="lf-brand-badge">LocalFix</span>
+    <span class="lf-portal-pill">Escrow & Mesh Admin</span>
+  </a>
+</div>
+{% endblock %}
+
+{% block nav-global %}
+<div style="display: flex; align-items: center; gap: 12px;">
+  <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #10B981; background: rgba(16, 185, 129, 0.12); padding: 4px 10px; border-radius: 9999px; border: 1px solid rgba(16, 185, 129, 0.3);">
+    <span style="width: 7px; height: 7px; border-radius: 50%; background: #10B981; box-shadow: 0 0 8px #10B981;"></span>
+    Mesh Active
+  </span>
+  <a href="http://localhost:5173" target="_blank" class="lf-website-link">
+    <span>🌐 View Website</span>
+    <span style="font-size: 0.7rem;">↗</span>
+  </a>
+</div>
+{% endblock %}

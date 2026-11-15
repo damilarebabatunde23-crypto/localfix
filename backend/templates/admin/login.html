@@ -1,0 +1,296 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    body.login {
+      background: #0B0A10 !important;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow-x: hidden;
+      font-family: 'Inter', -apple-system, sans-serif !important;
+    }
+
+    /* Ambient atmospheric background glows */
+    body.login::before {
+      content: '';
+      position: fixed;
+      top: -150px;
+      right: -150px;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.28) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body.login::after {
+      content: '';
+      position: fixed;
+      bottom: -150px;
+      left: -150px;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(109, 40, 217, 0.22) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body.login #header,
+    body.login .breadcrumbs {
+      display: none !important;
+    }
+
+    body.login #container {
+      background: transparent !important;
+      border: none !important;
+      width: 100% !important;
+      max-width: 460px !important;
+      margin: 0 auto !important;
+      padding: 20px !important;
+      box-sizing: border-box !important;
+      position: relative;
+      z-index: 10;
+    }
+
+    body.login #content {
+      padding: 0 !important;
+      background: transparent !important;
+      width: 100% !important;
+    }
+
+    .lf-login-wrapper {
+      background: rgba(22, 17, 36, 0.88) !important;
+      border: 1px solid rgba(167, 139, 250, 0.22) !important;
+      border-radius: 24px !important;
+      padding: 36px 32px !important;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(124, 58, 237, 0.15) !important;
+      backdrop-filter: blur(25px) saturate(180%) !important;
+      -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+    }
+
+    .lf-login-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .lf-login-logo {
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #FFFFFF 20%, #C4B5FD 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .lf-login-logo span.bolt {
+      -webkit-text-fill-color: #FBBF24;
+      filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.7));
+    }
+
+    .lf-login-subtitle {
+      font-size: 0.82rem;
+      color: #94A3B8;
+      margin-top: 6px;
+      font-weight: 500;
+    }
+
+    .lf-security-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #34D399;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      padding: 4px 10px;
+      border-radius: 9999px;
+      margin-top: 10px;
+    }
+
+    body.login .form-row {
+      margin-bottom: 18px !important;
+      padding: 0 !important;
+      border: none !important;
+    }
+
+    body.login .form-row label {
+      display: block !important;
+      font-size: 0.78rem !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.05em !important;
+      color: #CBD5E1 !important;
+      margin-bottom: 6px !important;
+    }
+
+    body.login .form-row input {
+      width: 100% !important;
+      box-sizing: border-box !important;
+      background: rgba(15, 11, 26, 0.85) !important;
+      border: 1px solid rgba(167, 139, 250, 0.25) !important;
+      border-radius: 12px !important;
+      color: #FFFFFF !important;
+      padding: 12px 14px !important;
+      font-size: 0.95rem !important;
+      outline: none !important;
+      transition: all 0.2s ease !important;
+    }
+
+    body.login .form-row input:focus {
+      border-color: #A78BFA !important;
+      box-shadow: 0 0 20px rgba(124, 58, 237, 0.4) !important;
+      background: rgba(22, 17, 36, 0.95) !important;
+    }
+
+    body.login .submit-row {
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      margin-top: 24px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 12px !important;
+    }
+
+    body.login .submit-row input[type="submit"] {
+      width: 100% !important;
+      background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%) !important;
+      color: #FFFFFF !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      border-radius: 12px !important;
+      padding: 13px !important;
+      font-size: 0.95rem !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.02em !important;
+      cursor: pointer !important;
+      box-shadow: 0 0 25px rgba(124, 58, 237, 0.4) !important;
+      transition: all 0.2s ease !important;
+    }
+
+    body.login .submit-row input[type="submit"]:hover {
+      box-shadow: 0 0 35px rgba(124, 58, 237, 0.7) !important;
+      transform: translateY(-1px);
+    }
+
+    .lf-quick-fill-btn {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px dashed rgba(167, 139, 250, 0.3);
+      color: #C4B5FD;
+      padding: 10px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .lf-quick-fill-btn:hover {
+      background: rgba(124, 58, 237, 0.2);
+      border-color: #A78BFA;
+      color: #FFFFFF;
+    }
+
+    .lf-back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: #94A3B8;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .lf-back-link:hover {
+      color: #A78BFA;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="lf-login-wrapper">
+  <div class="lf-login-header">
+    <div class="lf-login-logo">
+      <span class="bolt">⚡</span>LocalFix
+    </div>
+    <div class="lf-login-subtitle">Platform Escrow Control Hub & Guild Admin</div>
+    <div>
+      <span class="lf-security-tag">
+        <span style="width: 6px; height: 6px; border-radius: 50%; background: #34D399; box-shadow: 0 0 8px #34D399;"></span>
+        256-Bit TLS • Role Vetted
+      </span>
+    </div>
+  </div>
+
+  {% if form.errors and not form.non_field_errors %}
+    <p class="errornote" style="background: rgba(244, 63, 94, 0.15); color: #FDA4AF; border: 1px solid rgba(244, 63, 94, 0.3); padding: 10px 14px; border-radius: 10px; font-size: 0.84rem; margin-bottom: 16px;">
+      {% blocktranslate count counter=form.errors.items|length %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
+    </p>
+  {% endif %}
+
+  {% if form.non_field_errors %}
+    {% for error in form.non_field_errors %}
+      <p class="errornote" style="background: rgba(244, 63, 94, 0.15); color: #FDA4AF; border: 1px solid rgba(244, 63, 94, 0.3); padding: 10px 14px; border-radius: 10px; font-size: 0.84rem; margin-bottom: 16px;">
+        {{ error }}
+      </p>
+    {% endfor %}
+  {% endif %}
+
+  <form action="{{ app_path }}" method="post" id="login-form">
+    {% csrf_token %}
+    <div class="form-row">
+      <label for="id_username">Email / Staff ID:</label>
+      <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required id="id_username" placeholder="admin@localfix.ng">
+    </div>
+    <div class="form-row">
+      <label for="id_password">Password:</label>
+      <input type="password" name="password" autocomplete="current-password" required id="id_password" placeholder="••••••••••••">
+      <input type="hidden" name="next" value="{{ next }}">
+    </div>
+
+    <div class="submit-row">
+      <input type="submit" value="Sign In to Control Hub →">
+
+      <button type="button" class="lf-quick-fill-btn" onclick="autofillAdmin()">
+        ⚡ Autofill Staff Admin (admin@localfix.ng)
+      </button>
+    </div>
+  </form>
+
+  <a href="http://localhost:5173" class="lf-back-link">
+    ← Return to LocalFix Web Application
+  </a>
+</div>
+
+<script>
+  function autofillAdmin() {
+    var userField = document.getElementById('id_username');
+    var passField = document.getElementById('id_password');
+    if (userField && passField) {
+      userField.value = 'admin@localfix.ng';
+      passField.value = 'admin123';
+      userField.style.borderColor = '#34D399';
+      passField.style.borderColor = '#34D399';
+    }
+  }
+</script>
+{% endblock %}

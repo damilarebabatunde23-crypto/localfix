@@ -1,0 +1,323 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   LocalFix Global Styles — Purple Glassmorphism + Claymorphism
+   ============================================================ */
+
+@layer base {
+  :root {
+    --color-primary: #6D28D9;
+    --color-secondary: #A78BFA;
+    --color-soft: #EDE9FE;
+    --color-dark-bg: #171326;
+    --color-light-bg: #FAF9FF;
+    color-scheme: dark light;
+  }
+
+  * {
+    border-color: rgba(167, 139, 250, 0.2);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans antialiased;
+    background-color: #ffffff;
+    color: #111111;
+    @apply dark:bg-dark-bg dark:text-gray-100;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary-700/40 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary-600/60;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-primary-700/30 text-primary-100;
+  }
+}
+
+@layer components {
+  /* ── Glassmorphism Panel ── */
+  .glass-panel {
+    @apply relative overflow-hidden;
+    background: rgba(37, 28, 64, 0.6);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(167, 139, 250, 0.15);
+    box-shadow: 0 8px 32px rgba(109, 40, 217, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  /* Light mode overrides */
+  :root:not(.dark) .glass-panel {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(109, 40, 217, 0.12);
+    box-shadow: 0 4px 24px rgba(109, 40, 217, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  :root:not(.dark) .lf-card:hover {
+    border-color: rgba(109, 40, 217, 0.25);
+    box-shadow: 0 8px 32px rgba(109, 40, 217, 0.12);
+  }
+
+  /* Light mode text overrides for glass panels */
+  :root:not(.dark) .glass-panel h1.text-white,
+  :root:not(.dark) .glass-panel h2.text-white,
+  :root:not(.dark) .glass-panel h3.text-white,
+  :root:not(.dark) .glass-panel h4.text-white,
+  :root:not(.dark) .glass-panel p.text-white,
+  :root:not(.dark) .glass-panel div > span.text-white {
+    color: #111827 !important;
+  }
+
+  /* High-contrast readable gray scales for light mode */
+  :root:not(.dark) .glass-panel .text-gray-300 { color: #1f2937 !important; }
+  :root:not(.dark) .glass-panel .text-gray-400 { color: #374151 !important; }
+  :root:not(.dark) .glass-panel .text-gray-500 { color: #4b5563 !important; }
+
+  /* Ensure button text remains crisp white on primary/emerald/colored buttons in light mode */
+  :root:not(.dark) button.text-white,
+  :root:not(.dark) a.text-white,
+  :root:not(.dark) button.text-white span,
+  :root:not(.dark) a.text-white span,
+  :root:not(.dark) button[class*="bg-primary"],
+  :root:not(.dark) button[class*="bg-emerald"],
+  :root:not(.dark) button[class*="bg-purple"],
+  :root:not(.dark) a[class*="bg-primary"],
+  :root:not(.dark) a[class*="bg-emerald"],
+  :root:not(.dark) a[class*="bg-purple"],
+  :root:not(.dark) [class*="bg-primary-700"] *,
+  :root:not(.dark) [class*="bg-primary-600"] *,
+  :root:not(.dark) [class*="bg-emerald-600"] *,
+  :root:not(.dark) [class*="bg-purple-600"] * {
+    color: #ffffff !important;
+  }
+
+  /* Light mode page background */
+  :root:not(.dark) .min-h-screen.bg-dark-bg,
+  :root:not(.dark) [style*="--page-bg"] {
+    background-color: #f8f7ff !important;
+  }
+
+  /* Light mode text corrections at page level */
+  :root:not(.dark) .text-gray-300 { color: #1f2937; }
+  :root:not(.dark) .text-gray-400 { color: #374151; }
+  :root:not(.dark) .text-gray-500 { color: #4b5563; }
+  :root:not(.dark) .text-gray-600 { color: #4b5563; }
+
+  .glass-panel-light {
+    @apply relative overflow-hidden;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(109, 40, 217, 0.12);
+    box-shadow: 0 8px 32px rgba(109, 40, 217, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  /* ── Claymorphism Button ── */
+  .clay-btn {
+    @apply relative font-semibold transition-all duration-200;
+    @apply rounded-2xl px-5 py-2.5;
+    box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.3),
+                -2px -2px 8px rgba(255, 255, 255, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  .clay-btn:active {
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4),
+                -1px -1px 4px rgba(255, 255, 255, 0.03),
+                inset 2px 2px 6px rgba(0, 0, 0, 0.3);
+    transform: scale(0.98);
+  }
+
+  .clay-btn-primary {
+    @apply clay-btn bg-primary-700 text-white hover:bg-primary-600;
+  }
+
+  .clay-btn-secondary {
+    @apply clay-btn bg-primary-400/20 text-primary-300 hover:bg-primary-400/30;
+    border: 1px solid rgba(167, 139, 250, 0.3);
+  }
+
+  .clay-btn-ghost {
+    @apply clay-btn bg-white/5 text-gray-300 hover:bg-white/10;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* ── Card ── */
+  .lf-card {
+    @apply glass-panel rounded-2xl p-4 transition-all duration-300;
+  }
+
+  .lf-card:hover {
+    border-color: rgba(167, 139, 250, 0.3);
+    box-shadow: 0 12px 40px rgba(109, 40, 217, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+  }
+
+  /* ── Input ── */
+  .lf-input {
+    @apply w-full rounded-xl px-4 py-2.5 text-sm outline-none transition-all duration-200;
+    background: rgba(37, 28, 64, 0.5);
+    border: 1px solid rgba(167, 139, 250, 0.2);
+    color: #e2e0ff;
+  }
+  .lf-input::placeholder {
+    color: rgba(167, 139, 250, 0.5);
+  }
+  .lf-input:focus {
+    border-color: rgba(109, 40, 217, 0.6);
+    box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.2);
+  }
+
+  /* ── Badge / Tag ── */
+  .lf-badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+
+  .lf-badge-purple {
+    @apply lf-badge bg-primary-700/30 text-primary-300;
+    border: 1px solid rgba(109, 40, 217, 0.3);
+  }
+
+  .lf-badge-green {
+    @apply lf-badge bg-green-500/20 text-green-400;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+
+  .lf-badge-orange {
+    @apply lf-badge bg-orange-500/20 text-orange-400;
+    border: 1px solid rgba(249, 115, 22, 0.3);
+  }
+
+  /* ── Skeleton loader ── */
+  .skeleton {
+    @apply rounded-xl;
+    background: linear-gradient(
+      90deg,
+      rgba(167, 139, 250, 0.05) 0%,
+      rgba(167, 139, 250, 0.12) 50%,
+      rgba(167, 139, 250, 0.05) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  /* ── Star rating ── */
+  .star-filled { @apply text-yellow-400; }
+  .star-empty { @apply text-gray-600; }
+
+  /* ── Verification badge ── */
+  .verified-badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold;
+    background: linear-gradient(135deg, #6D28D9, #A78BFA);
+    color: white;
+  }
+
+  /* ── Gradient text ── */
+  .gradient-text {
+    background: linear-gradient(135deg, #A78BFA 0%, #6D28D9 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Nav active indicator ── */
+  .nav-active {
+    @apply relative;
+  }
+  .nav-active::after {
+    content: '';
+    @apply absolute bottom-0 left-1/2 -translate-x-1/2;
+    @apply w-1 h-1 rounded-full bg-primary-400;
+  }
+
+  /* ── Emoji reaction pill ── */
+  .reaction-pill {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs cursor-pointer transition-all duration-150;
+    background: rgba(109, 40, 217, 0.2);
+    border: 1px solid rgba(167, 139, 250, 0.2);
+  }
+  .reaction-pill:hover {
+    background: rgba(109, 40, 217, 0.35);
+    border-color: rgba(167, 139, 250, 0.4);
+    transform: scale(1.05);
+  }
+
+  /* ── Worker online dot ── */
+  .online-dot {
+    @apply absolute bottom-0 right-0 w-3 h-3 rounded-full bg-success;
+    border: 2px solid rgba(23, 19, 38, 1);
+  }
+
+  /* ── Map popup ── */
+  .leaflet-popup-content-wrapper {
+    background: rgba(37, 28, 64, 0.95) !important;
+    backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(167, 139, 250, 0.2) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 12px 40px rgba(109, 40, 217, 0.3) !important;
+    color: #e2e0ff !important;
+  }
+  .leaflet-popup-tip {
+    background: rgba(37, 28, 64, 0.95) !important;
+  }
+  .leaflet-popup-close-button {
+    color: #A78BFA !important;
+  }
+}
+
+@layer utilities {
+  /* ── Glass blur utilities ── */
+  .blur-glass { backdrop-filter: blur(16px) saturate(180%); }
+  .blur-glass-sm { backdrop-filter: blur(8px) saturate(150%); }
+
+  /* ── Hide scrollbar ── */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* ── Text truncate multi-line ── */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ── Reduced motion support ── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
