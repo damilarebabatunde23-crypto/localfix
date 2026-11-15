@@ -20,8 +20,8 @@ import {
   ChevronRight,
   FileText,
 } from 'lucide-react'
-import { MOCK_WORKERS } from '@/lib/utils'
-import { chatApi, uploadApi } from '@/lib/api'
+import { MOCK_WORKERS, normalizeWorker } from '@/lib/utils'
+import { chatApi, uploadApi, servicesApi } from '@/lib/api'
 import { useAppStore } from '@/stores/useAppStore'
 import { useChatStore } from '@/stores/useChatStore'
 import toast from 'react-hot-toast'
@@ -173,9 +173,37 @@ export default function ChatPage() {
         }
         setThreads((prev) => [customThread, ...prev.filter((t) => t.id !== customThread.id)])
         setSelectedThreadId(customThread.id)
+        setMobileView('chat')
+        useChatStore.getState().openChat(customThread.user, undefined)
+      } else {
+        // Fetch dynamic or newly registered artisan from backend API
+        servicesApi.getWorkerDetail(workerParam).then((res: any) => {
+          if (res) {
+            const nw = normalizeWorker(res)
+            const customThread = {
+              id: `worker-${nw.id}`,
+              user: {
+                id: nw.id,
+                name: nw.displayName,
+                avatar: nw.avatar,
+                role: nw.profession,
+                online: true,
+                phone: nw.phone,
+              },
+              lastMessage: 'Ready to discuss requirements.',
+              time: 'Just now',
+              unread: 0,
+            }
+            setThreads((prev) => [customThread, ...prev.filter((t) => t.id !== customThread.id)])
+            setSelectedThreadId(customThread.id)
+            setMobileView('chat')
+            useChatStore.getState().openChat(customThread.user, undefined)
+          }
+        }).catch(() => {})
       }
     } else if (convParam) {
       setSelectedThreadId(convParam)
+      setMobileView('chat')
     }
   }, [searchParams])
 
@@ -186,6 +214,7 @@ export default function ChatPage() {
       try {
         const convs = await chatApi.getConversations()
         if (Array.isArray(convs) && convs.length > 0) {
+          const convParam = searchParams.get('conversation')
           const mapped = convs.map((c: any) => ({
             id: c.id,
             user: {
@@ -203,7 +232,18 @@ export default function ChatPage() {
             unread: c.unread_count || 0,
           }))
           setThreads(mapped)
-          if (!selectedThreadId || selectedThreadId === 'thread-1') {
+
+          if (convParam) {
+            const match = mapped.find((m: any) => m.id === convParam)
+            if (match) {
+              setSelectedThreadId(match.id)
+              setMobileView('chat')
+              useChatStore.getState().openChat(match.user, match.id)
+            } else {
+              setSelectedThreadId(convParam)
+              setMobileView('chat')
+            }
+          } else if (!selectedThreadId || selectedThreadId === 'thread-1') {
             setSelectedThreadId(mapped[0].id)
           }
         }
@@ -212,7 +252,7 @@ export default function ChatPage() {
       }
     }
     fetchBackendThreads()
-  }, [isAuthenticated])
+  }, [isAuthenticated, searchParams])
 
   // Scroll to bottom on new message
   useEffect(() => {
@@ -459,14 +499,32 @@ export default function ChatPage() {
           {/* Action icons */}
           <div className="flex items-center gap-1 text-gray-300">
             <button
-              onClick={() => useChatStore.getState().startCall('audio', currentCounterpart)}
+              onClick={() => {
+                const safeName = currentCounterpart.name || 'Member'
+                useChatStore.getState().startCall('audio', {
+                  id: String(currentCounterpart.id),
+                  name: safeName,
+                  avatar: currentCounterpart.avatar,
+                  role: currentCounterpart.role || 'Verified Member',
+                  phone: currentCounterpart.phone || '',
+                })
+              }}
               className="p-2 rounded-xl hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
               title="Voice Call"
             >
               <Phone className="w-4 h-4 text-primary-300" />
             </button>
             <button
-              onClick={() => useChatStore.getState().startCall('video', currentCounterpart)}
+              onClick={() => {
+                const safeName = currentCounterpart.name || 'Member'
+                useChatStore.getState().startCall('video', {
+                  id: String(currentCounterpart.id),
+                  name: safeName,
+                  avatar: currentCounterpart.avatar,
+                  role: currentCounterpart.role || 'Verified Member',
+                  phone: currentCounterpart.phone || '',
+                })
+              }}
               className="p-2 rounded-xl hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
               title="Video Call"
             >

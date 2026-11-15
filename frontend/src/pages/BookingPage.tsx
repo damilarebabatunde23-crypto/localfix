@@ -503,103 +503,135 @@ export default function BookingPage() {
               </motion.div>
             )}
 
-            {/* Worker Card & Direct Contact */}
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <img
-                  src={worker.avatar}
-                  alt={worker.displayName}
-                  className="w-12 h-12 rounded-xl object-cover border border-primary-500/30"
-                />
-                <div>
-                  <div className="font-bold text-white flex items-center gap-1.5">
-                    <span>{worker.displayName}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary-600/30 text-primary-300">
-                      ✓ Vetted Artisan
-                    </span>
+            {/* Counterpart Card & Direct Contact (Artisan viewing Client OR Client viewing Artisan) */}
+            {(() => {
+              const isArtisanViewing =
+                user?.role === 'worker' ||
+                (user?.id && (activeBooking?.worker_details?.user?.id === user?.id || String(activeBooking?.worker) === String(user?.id)))
+
+              const contactPerson = isArtisanViewing
+                ? {
+                    id: String(activeBooking?.customer || 'client'),
+                    name: activeBooking?.customer_name || 'Client / Service Requester',
+                    avatar:
+                      activeBooking?.customer_avatar ||
+                      `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(activeBooking?.customer_name || 'Client')}&backgroundColor=6D28D9`,
+                    role: 'Client / Booking Owner',
+                    phone: activeBooking?.customer_phone || '',
+                    badge: 'Work Order Requester',
+                  }
+                : {
+                    id: String(worker.id),
+                    name: worker.displayName || 'Verified Artisan',
+                    avatar: worker.avatar,
+                    role: worker.profession || 'Artisan',
+                    phone: artisanPhone,
+                    badge: '✓ Vetted Artisan',
+                  }
+
+              const counterpartPhone = contactPerson.phone || artisanPhone || '+234 800 000 0000'
+              const counterpartCleanPhone = counterpartPhone.replace(/[^0-9]/g, '')
+              const firstName = contactPerson.name.split(' ')[0]
+
+              return (
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={contactPerson.avatar}
+                      alt={contactPerson.name}
+                      className="w-12 h-12 rounded-xl object-cover border border-primary-500/30"
+                    />
+                    <div>
+                      <div className="font-bold text-white flex items-center gap-1.5">
+                        <span>{contactPerson.name}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary-600/30 text-primary-300">
+                          {contactPerson.badge}
+                        </span>
+                      </div>
+                      <div className="text-xs text-primary-300">{contactPerson.role}</div>
+                      <div className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-primary-400" />
+                        <span>{b.location_address || worker.serviceArea || 'On-Site Location'}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-xs text-primary-300">{worker.profession}</div>
-                  <div className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-primary-400" />
-                    <span>{worker.serviceArea || 'Global Dispatch'}</span>
+
+                  {/* Direct Calling & In-App Communication Buttons */}
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    {/* Live In-App Voice Call */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        useChatStore.getState().startCall('audio', {
+                          id: contactPerson.id,
+                          name: contactPerson.name,
+                          avatar: contactPerson.avatar,
+                          role: contactPerson.role,
+                          phone: counterpartPhone,
+                        })
+                        toast.success(`Starting live voice call with ${firstName}!`, { icon: '📞' })
+                      }}
+                      className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-glow cursor-pointer"
+                      title={`Live Encrypted Voice Call with ${firstName}`}
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      <span>Voice Call</span>
+                    </button>
+
+                    {/* Live In-App Video Call */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        useChatStore.getState().startCall('video', {
+                          id: contactPerson.id,
+                          name: contactPerson.name,
+                          avatar: contactPerson.avatar,
+                          role: contactPerson.role,
+                          phone: counterpartPhone,
+                        })
+                        toast.success(`Starting live video inspection with ${firstName}!`, { icon: '📹' })
+                      }}
+                      className="px-3.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-glow cursor-pointer"
+                      title={`Live Video Call with ${firstName}`}
+                    >
+                      <Video className="w-3.5 h-3.5" />
+                      <span>Live Video</span>
+                    </button>
+
+                    <a
+                      href={`https://wa.me/${counterpartCleanPhone}?text=${encodeURIComponent(
+                        `Hello ${firstName}, I am contacting you regarding LocalFix booking #${b.booking_code} at ${b.location_address}.`
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3 py-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-emerald-500/30"
+                      title={`Message ${firstName} on WhatsApp`}
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>WhatsApp</span>
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        useChatStore.getState().openChat({
+                          id: contactPerson.id,
+                          name: contactPerson.name,
+                          avatar: contactPerson.avatar,
+                          role: contactPerson.role,
+                          phone: counterpartPhone,
+                        })
+                        toast.success(`Chat opened with ${firstName}!`)
+                      }}
+                      className="px-3 py-2.5 rounded-xl bg-primary-600/30 hover:bg-primary-600/50 text-primary-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-primary-500/30 cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-primary-400" />
+                      <span>Chat</span>
+                    </button>
                   </div>
                 </div>
-              </div>
-
-              {/* Direct Calling & In-App Communication Buttons */}
-              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                {/* Live In-App Voice Call */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    useChatStore.getState().startCall('audio', {
-                      id: worker.id,
-                      name: worker.displayName,
-                      avatar: worker.avatar,
-                      role: worker.profession,
-                      phone: artisanPhone,
-                    })
-                    toast.success(`Starting live voice call with ${worker.displayName.split(' ')[0]}!`, { icon: '📞' })
-                  }}
-                  className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-glow cursor-pointer"
-                  title="Live Encrypted In-App Voice Call"
-                >
-                  <Phone className="w-3.5 h-3.5" />
-                  <span>Voice Call</span>
-                </button>
-
-                {/* Live In-App Video Call */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    useChatStore.getState().startCall('video', {
-                      id: worker.id,
-                      name: worker.displayName,
-                      avatar: worker.avatar,
-                      role: worker.profession,
-                      phone: artisanPhone,
-                    })
-                    toast.success(`Starting live video inspection with ${worker.displayName.split(' ')[0]}!`, { icon: '📹' })
-                  }}
-                  className="px-3.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-glow cursor-pointer"
-                  title="Live Encrypted In-App Video Call"
-                >
-                  <Video className="w-3.5 h-3.5" />
-                  <span>Live Video</span>
-                </button>
-
-                <a
-                  href={`https://wa.me/${artisanWhatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
-                    `Hello ${worker.displayName}, I am contacting you regarding LocalFix booking #${b.booking_code} at ${b.location_address}.`
-                  )}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-emerald-500/30"
-                  title="Message on WhatsApp"
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>WhatsApp</span>
-                </a>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    useChatStore.getState().openChat({
-                      id: worker.id,
-                      name: worker.displayName,
-                      avatar: worker.avatar,
-                      role: worker.profession || 'Artisan',
-                      phone: artisanPhone,
-                    })
-                    toast.success(`Chat opened with ${worker.displayName.split(' ')[0]}!`)
-                  }}
-                  className="px-3 py-2.5 rounded-xl bg-primary-600/30 hover:bg-primary-600/50 text-primary-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-primary-500/30 cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-primary-400" />
-                  <span>Chat</span>
-                </button>
-              </div>
-            </div>
+              )
+            })()}
 
             {/* Quick Actions for Active Booking */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

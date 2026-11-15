@@ -278,6 +278,22 @@ export default function ProfilePage() {
     toast.success('Notification marked as read')
   }
 
+  const handleNotificationClick = (notif: any) => {
+    if (!notif.is_read && !notif.isRead) {
+      handleMarkNotificationRead(notif.id)
+    }
+    const targetUrl = notif.action_url || notif.actionUrl
+    if (targetUrl) {
+      navigate(targetUrl)
+    } else if (notif.title?.toLowerCase().includes('message')) {
+      navigate('/messages')
+    } else if (notif.notification_type === 'job' || notif.type === 'job') {
+      navigate('/profile?tab=services')
+    } else if (notif.notification_type === 'escrow' || notif.type === 'escrow') {
+      navigate('/profile?tab=wallet')
+    }
+  }
+
   const handleMarkAllNotificationsRead = async () => {
     try {
       await authApi.markAllNotificationsRead()
@@ -2355,11 +2371,13 @@ export default function ProfilePage() {
                     return (
                       <div
                         key={notif.id}
-                        className={`p-4 rounded-2xl border transition-all flex items-start justify-between gap-4 ${
+                        onClick={() => handleNotificationClick(notif)}
+                        className={`p-4 rounded-2xl border transition-all flex items-start justify-between gap-4 cursor-pointer hover:border-primary-400/60 hover:bg-white/10 active:scale-[0.99] group ${
                           isUnread
                             ? 'bg-primary-950/50 border-primary-500/40 shadow-glow-sm'
                             : 'bg-white/5 border-white/5 opacity-85 hover:opacity-100'
                         }`}
+                        title="Click to view client and open details"
                       >
                         <div className="flex items-start gap-3.5 flex-1">
                           <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-base ${
@@ -2372,7 +2390,7 @@ export default function ProfilePage() {
 
                           <div className="space-y-1 flex-1">
                             <div className="flex items-center gap-2">
-                              <h4 className="font-bold text-white text-xs sm:text-sm">{notif.title}</h4>
+                              <h4 className="font-bold text-white text-xs sm:text-sm group-hover:text-primary-300 transition-colors">{notif.title}</h4>
                               {isUnread && (
                                 <span className="w-2 h-2 rounded-full bg-primary-400 animate-pulse shadow-[0_0_8px_#a855f7]" />
                               )}
@@ -2386,6 +2404,8 @@ export default function ProfilePage() {
                               </span>
                               <span>&bull;</span>
                               <span className="capitalize">{type} notice</span>
+                              <span>&bull;</span>
+                              <span className="text-primary-400 font-semibold group-hover:underline">Click to view →</span>
                             </div>
                           </div>
                         </div>
@@ -2394,7 +2414,10 @@ export default function ProfilePage() {
                           {isUnread && (
                             <button
                               type="button"
-                              onClick={() => handleMarkNotificationRead(notif.id)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleMarkNotificationRead(notif.id)
+                              }}
                               className="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-white/5 hover:bg-white/10 text-primary-300 border border-white/10 transition-colors whitespace-nowrap"
                             >
                               Mark read

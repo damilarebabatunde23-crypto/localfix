@@ -376,14 +376,15 @@ export default function WorkerProfilePage() {
           <button
             type="button"
             onClick={() => {
+              const safeName = worker.displayName || worker.first_name || 'Artisan'
               useChatStore.getState().startCall('audio', {
-                id: worker.id,
-                name: worker.displayName,
+                id: String(worker.id),
+                name: safeName,
                 avatar: worker.avatar,
-                role: worker.profession,
-                phone: (worker as any).phone || (worker as any).phone_number,
+                role: worker.profession || 'Verified Artisan',
+                phone: worker.phone || (worker as any).phone_number || (worker as any).whatsapp_number,
               })
-              toast.success(`Starting live call with ${worker.displayName.split(' ')[0]}!`, { icon: '📞' })
+              toast.success(`Starting live call with ${safeName.split(' ')[0]}!`, { icon: '📞' })
             }}
             className="py-4 rounded-2xl text-xs sm:text-sm font-bold text-emerald-300 flex items-center justify-center gap-1.5 transition-all hover:bg-emerald-600/30 bg-emerald-950/40 border border-emerald-500/40 cursor-pointer"
             title="Start live encrypted voice call on LocalFix"
@@ -396,14 +397,15 @@ export default function WorkerProfilePage() {
           <button
             type="button"
             onClick={() => {
+              const safeName = worker.displayName || worker.first_name || 'Artisan'
               useChatStore.getState().startCall('video', {
-                id: worker.id,
-                name: worker.displayName,
+                id: String(worker.id),
+                name: safeName,
                 avatar: worker.avatar,
-                role: worker.profession,
-                phone: (worker as any).phone || (worker as any).phone_number,
+                role: worker.profession || 'Verified Artisan',
+                phone: worker.phone || (worker as any).phone_number || (worker as any).whatsapp_number,
               })
-              toast.success(`Starting live video inspection with ${worker.displayName.split(' ')[0]}!`, { icon: '📹' })
+              toast.success(`Starting live video inspection with ${safeName.split(' ')[0]}!`, { icon: '📹' })
             }}
             className="py-4 rounded-2xl text-xs sm:text-sm font-bold text-purple-200 flex items-center justify-center gap-1.5 transition-all hover:bg-purple-600/30 bg-purple-950/40 border border-purple-500/40 cursor-pointer"
             title="Start live video inspection on LocalFix"

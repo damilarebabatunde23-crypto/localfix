@@ -209,14 +209,32 @@ export default function FacebookChatDock() {
               {/* Action Buttons */}
               <div className="flex items-center gap-1 text-gray-300">
                 <button
-                  onClick={() => startCall('audio', activeContact)}
+                  onClick={() => {
+                    const safeContact = {
+                      id: String(activeContact?.id || 'contact'),
+                      name: activeContact?.name || 'LocalFix Artisan',
+                      avatar: activeContact?.avatar,
+                      role: activeContact?.role || 'Verified Artisan',
+                      phone: activeContact?.phone || '',
+                    }
+                    startCall('audio', safeContact)
+                  }}
                   className="p-1.5 rounded-lg hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
                   title="Start Audio Call"
                 >
                   <Phone className="w-3.5 h-3.5 text-primary-300" />
                 </button>
                 <button
-                  onClick={() => startCall('video', activeContact)}
+                  onClick={() => {
+                    const safeContact = {
+                      id: String(activeContact?.id || 'contact'),
+                      name: activeContact?.name || 'LocalFix Artisan',
+                      avatar: activeContact?.avatar,
+                      role: activeContact?.role || 'Verified Artisan',
+                      phone: activeContact?.phone || '',
+                    }
+                    startCall('video', safeContact)
+                  }}
                   className="p-1.5 rounded-lg hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
                   title="Start Video Call"
                 >

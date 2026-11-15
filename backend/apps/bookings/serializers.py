@@ -10,12 +10,14 @@ class BookingEventSerializer(serializers.ModelSerializer):
 class BookingSerializer(serializers.ModelSerializer):
     worker_details = WorkerProfileSerializer(source='worker', read_only=True)
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
+    customer_phone = serializers.CharField(source='customer.phone', read_only=True, default='')
+    customer_avatar = serializers.CharField(source='customer.resolved_avatar', read_only=True, default='')
     events = BookingEventSerializer(many=True, read_only=True)
 
     class Meta:
         model = Booking
         fields = [
-            'id', 'booking_code', 'customer', 'customer_name', 'worker',
+            'id', 'booking_code', 'customer', 'customer_name', 'customer_phone', 'customer_avatar', 'worker',
             'worker_details', 'service_type', 'description', 'location_address',
             'preferred_date', 'status', 'payment_method', 'payment_status',
             'quoted_amount', 'agreed_amount', 'platform_fee', 'currency',

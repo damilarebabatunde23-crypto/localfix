@@ -294,12 +294,32 @@ export const MOCK_MARKETPLACE = [
 
 export function normalizeWorker(w: any): any {
   if (!w) return null
+  const resolvedName =
+    w.display_name ||
+    w.displayName ||
+    (w.user?.full_name) ||
+    (w.user?.first_name ? `${w.user.first_name} ${w.user.last_name || ''}`.trim() : '') ||
+    'Verified Artisan'
+  const resolvedPhone =
+    w.phone ||
+    w.phone_number ||
+    w.whatsapp_number ||
+    w.whatsapp ||
+    w.user?.phone ||
+    '+234 800 000 0000'
+
   return {
     id: String(w.id),
     userId: w.user?.id ? String(w.user.id) : (w.userId || String(w.id)),
-    displayName: w.display_name || w.displayName || (w.user?.full_name) || 'Verified Artisan',
-    avatar: w.avatar || w.user?.resolved_avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop',
-    profession: w.profession || 'Specialist Technician',
+    displayName: resolvedName,
+    avatar:
+      w.avatar ||
+      w.user?.resolved_avatar ||
+      w.user?.avatar ||
+      `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(resolvedName)}&backgroundColor=6D28D9`,
+    profession: w.profession || w.category_name || 'Specialist Technician',
+    phone: resolvedPhone,
+    whatsapp: w.whatsapp_number || w.whatsapp || resolvedPhone,
     skills: w.skills || (w.category_name ? [w.category_name] : ['Artisan']),
     bio: w.bio || 'Vetted and verified LocalFix craftsman.',
     yearsExperience: w.years_experience ?? w.yearsExperience ?? 5,

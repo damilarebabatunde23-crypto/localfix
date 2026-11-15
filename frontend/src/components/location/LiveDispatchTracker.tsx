@@ -596,14 +596,15 @@ export default function LiveDispatchTracker({
           <button
             type="button"
             onClick={() => {
+              const safeName = artisanName || 'Artisan'
               useChatStore.getState().startCall('audio', {
                 id: bookingCode,
-                name: artisanName,
+                name: safeName,
                 avatar: artisanAvatar,
                 role: artisanProfession,
                 phone: artisanPhone,
               })
-              toast.success(`Starting live voice call with ${artisanName.split(' ')[0]}!`, { icon: '📞' })
+              toast.success(`Starting live voice call with ${safeName.split(' ')[0]}!`, { icon: '📞' })
             }}
             className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-glow cursor-pointer"
             title="Live Voice Call"
@@ -616,14 +617,15 @@ export default function LiveDispatchTracker({
           <button
             type="button"
             onClick={() => {
+              const safeName = artisanName || 'Artisan'
               useChatStore.getState().startCall('video', {
                 id: bookingCode,
-                name: artisanName,
+                name: safeName,
                 avatar: artisanAvatar,
                 role: artisanProfession,
                 phone: artisanPhone,
               })
-              toast.success(`Starting live video inspection with ${artisanName.split(' ')[0]}!`, { icon: '📹' })
+              toast.success(`Starting live video inspection with ${safeName.split(' ')[0]}!`, { icon: '📹' })
             }}
             className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-glow cursor-pointer"
             title="Live Video Inspection"
