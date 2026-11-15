@@ -19,6 +19,7 @@ import {
   ExternalLink,
   ChevronRight,
   FileText,
+  MessageCircle,
 } from 'lucide-react'
 import { MOCK_WORKERS, normalizeWorker } from '@/lib/utils'
 import { chatApi, uploadApi, servicesApi } from '@/lib/api'
@@ -141,7 +142,11 @@ export default function ChatPage() {
   const [showRightPanel, setShowRightPanel] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
-  const [mobileView, setMobileView] = useState<'threads' | 'chat'>('chat')
+  const [mobileView, setMobileView] = useState<'threads' | 'chat'>(() => {
+    return (searchParams.get('worker') || searchParams.get('conversation'))
+      ? 'chat'
+      : (typeof window !== 'undefined' && window.innerWidth < 768 ? 'threads' : 'chat')
+  })
 
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -266,6 +271,20 @@ export default function ChatPage() {
       useChatStore.getState().openChat(thread.user, thread.id.startsWith('thread-') ? undefined : thread.id)
     }
   }, [selectedThreadId, threads])
+
+  // Real-time synchronization: poll messages every 2.5s for real human conversation
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    const interval = setInterval(async () => {
+      const activeConvId = useChatStore.getState().activeConversationId
+      if (activeConvId && !activeConvId.startsWith('thread-')) {
+        await useChatStore.getState().loadMessagesForConversation(activeConvId)
+      }
+    }, 2500)
+
+    return () => clearInterval(interval)
+  }, [isAuthenticated])
 
   const handleSendMessage = async (textToSend?: string, mediaUrl?: string, mediaType = 'text') => {
     const content = textToSend ?? input
@@ -566,7 +585,18 @@ export default function ChatPage() {
             </span>
           </div>
 
-          {messages.map((msg) => {
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center text-gray-400">
+              <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 shadow-lg">
+                <MessageCircle className="w-7 h-7 text-primary-400" />
+              </div>
+              <h4 className="text-white font-bold text-sm mb-1">Direct Chat with {currentCounterpart.name}</h4>
+              <p className="text-xs text-gray-400 max-w-xs leading-relaxed">
+                Send a message, repair photo, or document. Messages are exchanged directly between you and the artisan in real time.
+              </p>
+            </div>
+          ) : (
+            messages.map((msg) => {
             const isMe = msg.senderId === 'me'
             const isThumbsUp = msg.mediaType === 'thumbs_up' || msg.text === '👍'
 
@@ -697,7 +727,7 @@ export default function ChatPage() {
                 </div>
               </div>
             )
-          })}
+          }))}
 
           {/* Typing Indicator */}
           {isTyping && (

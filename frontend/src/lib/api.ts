@@ -449,6 +449,31 @@ export const chatApi = {
     const res = await api.post(`/chat/conversations/${id}/read/`)
     return res.data
   },
+  // WebRTC Real-Time Call Signaling
+  startCallSession: async (data: { recipient_id: string; call_type: 'audio' | 'video'; offer: any; conversation_id?: string }) => {
+    const res = await api.post('/chat/calls/start/', data)
+    return res.data
+  },
+  getActiveIncomingCall: async () => {
+    const res = await api.get('/chat/calls/active/')
+    return res.data
+  },
+  getCallDetail: async (id: string) => {
+    const res = await api.get(`/chat/calls/${id}/`)
+    return res.data
+  },
+  answerCallSession: async (id: string, answer: any) => {
+    const res = await api.post(`/chat/calls/${id}/answer/`, { answer })
+    return res.data
+  },
+  sendIceCandidate: async (id: string, candidate: any) => {
+    const res = await api.post(`/chat/calls/${id}/ice-candidate/`, { candidate })
+    return res.data
+  },
+  endCallSession: async (id: string, status = 'ended') => {
+    const res = await api.post(`/chat/calls/${id}/end/`, { status })
+    return res.data
+  },
 }
 
 // ==========================================

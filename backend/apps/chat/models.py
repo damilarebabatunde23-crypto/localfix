@@ -40,3 +40,38 @@ class ChatMessage(models.Model):
 
     def __str__(self):
         return f"[{self.sender.first_name}] {self.content[:30]}"
+
+class CallSession(models.Model):
+    STATUS_CHOICES = (
+        ('ringing', 'Ringing'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+        ('ended', 'Ended'),
+    )
+    TYPE_CHOICES = (
+        ('audio', 'Voice Call'),
+        ('video', 'Video Call'),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    caller = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='initiated_calls')
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_calls')
+    conversation = models.ForeignKey(Conversation, on_delete=models.SET_NULL, null=True, blank=True, related_name='call_sessions')
+    call_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='audio')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ringing')
+    
+    # WebRTC Signaling Data
+    offer = models.JSONField(null=True, blank=True)
+    answer = models.JSONField(null=True, blank=True)
+    caller_candidates = models.JSONField(default=list, blank=True)
+    recipient_candidates = models.JSONField(default=list, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.call_type} call from {self.caller} to {self.recipient} [{self.status}]"
+

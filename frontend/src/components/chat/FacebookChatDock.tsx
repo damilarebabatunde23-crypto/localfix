@@ -18,6 +18,7 @@ import {
   ChevronDown,
   Sparkles,
   ExternalLink,
+  MessageCircle,
 } from 'lucide-react'
 import { useChatStore } from '@/stores/useChatStore'
 import { uploadApi } from '@/lib/api'
@@ -287,12 +288,21 @@ export default function FacebookChatDock() {
                 </span>
               </div>
 
-              {messages.map((msg, index) => {
-                const isMe = msg.senderId === 'me'
-                const isLastFromMe = isMe && (index === messages.length - 1 || messages[index + 1]?.senderId !== 'me')
-                const isThumbsUp = msg.mediaType === 'thumbs_up' || msg.text === '👍'
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center text-gray-400">
+                  <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-2 shadow-sm">
+                    <MessageCircle className="w-5 h-5 text-primary-400" />
+                  </div>
+                  <span className="text-xs text-white font-semibold mb-0.5">Start chat with {activeContact?.name || 'Artisan'}</span>
+                  <span className="text-[10px] text-gray-400 max-w-[200px]">Type below to send a direct message in real time.</span>
+                </div>
+              ) : (
+                messages.map((msg, index) => {
+                  const isMe = msg.senderId === 'me'
+                  const isLastFromMe = isMe && (index === messages.length - 1 || messages[index + 1]?.senderId !== 'me')
+                  const isThumbsUp = msg.mediaType === 'thumbs_up' || msg.text === '👍'
 
-                return (
+                  return (
                   <div
                     key={msg.id}
                     onMouseEnter={() => setHoveredMessageId(msg.id)}
@@ -422,7 +432,7 @@ export default function FacebookChatDock() {
                     </div>
                   </div>
                 )
-              })}
+              }))}
 
               {/* Typing indicator */}
               {isTyping && (

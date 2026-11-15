@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Conversation, ChatMessage
+from .models import Conversation, ChatMessage, CallSession
 from apps.authentication.serializers import UserSerializer
 
 class ChatMessageSerializer(serializers.ModelSerializer):
@@ -46,3 +46,23 @@ class ConversationSerializer(serializers.ModelSerializer):
                 return UserSerializer(other).data
         first = obj.participants.first()
         return UserSerializer(first).data if first else None
+
+
+class CallSessionSerializer(serializers.ModelSerializer):
+    caller_name = serializers.CharField(source='caller.full_name', read_only=True)
+    caller_avatar = serializers.CharField(source='caller.resolved_avatar', read_only=True)
+    caller_phone = serializers.CharField(source='caller.phone_number', read_only=True)
+    recipient_name = serializers.CharField(source='recipient.full_name', read_only=True)
+    recipient_avatar = serializers.CharField(source='recipient.resolved_avatar', read_only=True)
+
+    class Meta:
+        model = CallSession
+        fields = [
+            'id', 'caller', 'caller_name', 'caller_avatar', 'caller_phone',
+            'recipient', 'recipient_name', 'recipient_avatar',
+            'conversation', 'call_type', 'status',
+            'offer', 'answer', 'caller_candidates', 'recipient_candidates',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'caller', 'created_at', 'updated_at']
+

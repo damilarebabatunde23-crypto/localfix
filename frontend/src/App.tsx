@@ -8,6 +8,7 @@ import MobileBottomNav from '@/components/layout/MobileBottomNav'
 import Footer from '@/components/layout/Footer'
 import FacebookChatDock from '@/components/chat/FacebookChatDock'
 import ActiveCallModal from '@/components/chat/ActiveCallModal'
+import IncomingCallModal from '@/components/chat/IncomingCallModal'
 import LocationPromptModal from '@/components/location/LocationPromptModal'
 
 // Pages
@@ -108,6 +109,9 @@ export default function App() {
 
       {/* Global Interactive Audio & Video Call Modal */}
       <ActiveCallModal />
+
+      {/* Global Incoming Call Alert & Answer Modal */}
+      <IncomingCallModal />
 
       {/* Global Location Activation Modal (prompts every user to turn on location) */}
       <LocationPromptModal />

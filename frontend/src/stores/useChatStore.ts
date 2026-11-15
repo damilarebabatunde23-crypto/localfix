@@ -34,6 +34,10 @@ export interface ActiveCallState {
   isCameraOff: boolean
   isSpeakerOn: boolean
   isMinimized: boolean
+  callId?: string
+  isIncoming?: boolean
+  offer?: any
+  answer?: any
 }
 
 interface ChatStoreState {
@@ -46,6 +50,7 @@ interface ChatStoreState {
   conversations: any[]
   unreadTotal: number
   activeCall: ActiveCallState | null
+  incomingCall: ActiveCallState | null
 
   // Actions
   openChat: (contact?: Partial<ChatContact>, conversationId?: string) => void
@@ -60,13 +65,16 @@ interface ChatStoreState {
   playMessageSound: () => void
   
   // Calls
-  startCall: (type: 'audio' | 'video', contact?: ChatContact) => void
-  endCall: () => void
+  startCall: (type: 'audio' | 'video', contact?: ChatContact, callId?: string) => void
+  endCall: (callId?: string) => Promise<void>
   toggleCallMute: () => void
   toggleCallCamera: () => void
   toggleCallSpeaker: () => void
   toggleCallMinimize: () => void
   setCallDuration: (sec: number) => void
+  checkIncomingCall: () => Promise<void>
+  acceptIncomingCall: () => void
+  declineIncomingCall: () => Promise<void>
 }
 
 const DEFAULT_CONTACT: ChatContact = {
@@ -78,47 +86,7 @@ const DEFAULT_CONTACT: ChatContact = {
   phone: '+234 802 345 6789',
 }
 
-const DEFAULT_MESSAGES: ChatMessageItem[] = [
-  {
-    id: 'msg-1',
-    senderId: 'other',
-    text: 'Hello! I noticed your request for solar and inverter inspection in Ikeja. I am available today.',
-    time: '10:14 AM',
-    read: true,
-    reactions: { '👍': 1 },
-  },
-  {
-    id: 'msg-2',
-    senderId: 'me',
-    text: 'Hi Babatunde! My 5kVA inverter started showing an overload error even on minimal load.',
-    time: '10:16 AM',
-    read: true,
-  },
-  {
-    id: 'msg-3',
-    senderId: 'other',
-    text: 'Understood. That is usually a MOSFET bridge failure or battery bank calibration issue. I can bring diagnostic instruments.',
-    time: '10:18 AM',
-    read: true,
-  },
-  {
-    id: 'msg-4',
-    senderId: 'me',
-    text: 'Can you arrive around 2:30 PM? Escrow vault is funded.',
-    time: '10:20 AM',
-    read: true,
-    userReaction: '❤️',
-    reactions: { '❤️': 1 },
-  },
-  {
-    id: 'msg-5',
-    senderId: 'other',
-    text: 'Confirmed! 2:30 PM works. I will ping you 15 minutes before arrival. 👍',
-    time: '10:22 AM',
-    read: true,
-    reactions: { '👍': 1 },
-  },
-]
+const DEFAULT_MESSAGES: ChatMessageItem[] = []
 
 // Play sound using Web Audio API
 export const playChatSound = (type: 'pop' | 'ring' | 'end' | 'connect') => {
@@ -200,6 +168,7 @@ export const useChatStore = create<ChatStoreState>()(
       conversations: [],
       unreadTotal: 0,
       activeCall: null,
+      incomingCall: null,
 
       playMessageSound: () => {
         playChatSound('pop')
@@ -300,9 +269,15 @@ export const useChatStore = create<ChatStoreState>()(
                 mediaType: m.message_type === 'image' ? 'image' : m.media_url ? 'image' : 'text',
               }
             })
-            if (parsed.length > 0) {
-              set({ messages: parsed })
+
+            const prev = get().messages
+            if (prev.length > 0 && parsed.length > prev.length) {
+              const last = parsed[parsed.length - 1]
+              if (last && last.senderId === 'other') {
+                playChatSound('pop')
+              }
             }
+            set({ messages: parsed })
           }
         } catch {
           // Keep persistent messages
@@ -355,14 +330,11 @@ export const useChatStore = create<ChatStoreState>()(
           }
         }
 
-        // Post message to backend DB so it permanently saves in PostgreSQL/SQLite!
-        let backendSaved = false
+        // Post message to backend DB so it permanently saves in PostgreSQL/SQLite for the real recipient!
         if (convId) {
           try {
             const savedMsg = await chatApi.sendMessage(convId, trimmed, mediaUrl, mediaType)
             if (savedMsg && savedMsg.id) {
-              backendSaved = true
-              // Update with official database ID
               set((state) => ({
                 messages: state.messages.map((m) =>
                   m.id === tempId ? { ...m, id: savedMsg.id, read: savedMsg.is_read } : m
@@ -371,38 +343,7 @@ export const useChatStore = create<ChatStoreState>()(
             }
           } catch {
             // Local message remains safely persisted in Zustand storage
-            backendSaved = false
           }
-        }
-
-        // If chatting with a mock contact or backend conversation failed/offline, provide responsive artisan reply!
-        if (!backendSaved) {
-          set({ isTyping: true })
-          setTimeout(() => {
-            set({ isTyping: false })
-            const contactFirstName = activeContact?.name ? activeContact.name.split(' ')[0] : 'Artisan'
-            const replies = [
-              `Hello! I received your message about "${trimmed.slice(0, 35)}${trimmed.length > 35 ? '...' : ''}". I am active and ready. 👍`,
-              `Message received! My diagnostic gear is prepped. Send me your location and preferred timing. 🛠️`,
-              `Got it! Escrow milestone protection ensures your payment remains safe until completion. When would you like me to arrive?`,
-              `Confirmed! I have the specialized tools ready. Feel free to initiate an in-app call or WhatsApp if you need to show the fault live.`,
-            ]
-            const randomReply = replies[Math.floor(Math.random() * replies.length)]
-
-            const replyMsg: ChatMessageItem = {
-              id: `msg-${Date.now() + 1}`,
-              senderId: 'other',
-              text: randomReply,
-              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              read: true,
-              reactions: { '👍': 1 },
-            }
-
-            set((state) => ({
-              messages: [...state.messages, replyMsg],
-            }))
-            playChatSound('pop')
-          }, 1000)
         }
       },
 
@@ -431,23 +372,6 @@ export const useChatStore = create<ChatStoreState>()(
             // Local fallback persists
           }
         }
-
-        set({ isTyping: true })
-        setTimeout(() => {
-          set({ isTyping: false })
-          const thumbsReply: ChatMessageItem = {
-            id: `msg-${Date.now() + 1}`,
-            senderId: 'other',
-            text: '👍',
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            read: true,
-            mediaType: 'thumbs_up',
-          }
-          set((state) => ({
-            messages: [...state.messages, thumbsReply],
-          }))
-          playChatSound('pop')
-        }, 1200)
       },
 
       addReaction: (messageId: string, emoji: string) => {
@@ -474,7 +398,7 @@ export const useChatStore = create<ChatStoreState>()(
       },
 
       // Call actions
-      startCall: (type, contact) => {
+      startCall: (type, contact, callId) => {
         const target = contact || get().activeContact || DEFAULT_CONTACT
         playChatSound('ring')
         set({
@@ -487,12 +411,20 @@ export const useChatStore = create<ChatStoreState>()(
             isCameraOff: false,
             isSpeakerOn: true,
             isMinimized: false,
+            callId,
+            isIncoming: false,
           },
         })
       },
 
-      endCall: () => {
+      endCall: async (callId) => {
         playChatSound('end')
+        const currentCallId = callId || get().activeCall?.callId
+        if (currentCallId) {
+          try {
+            await chatApi.endCallSession(currentCallId, 'ended')
+          } catch {}
+        }
         set((state) => {
           if (!state.activeCall) return { activeCall: null }
           return {
@@ -504,7 +436,74 @@ export const useChatStore = create<ChatStoreState>()(
         })
         setTimeout(() => {
           set({ activeCall: null })
-        }, 1200)
+        }, 800)
+      },
+
+      checkIncomingCall: async () => {
+        try {
+          const { useAppStore } = await import('@/stores/useAppStore')
+          if (!useAppStore.getState().isAuthenticated) return
+          if (get().activeCall) return // already in a call
+
+          const res = await chatApi.getActiveIncomingCall()
+          if (res?.active_call && res.active_call.id) {
+            const call = res.active_call
+            if (get().incomingCall?.callId !== call.id) {
+              set({
+                incomingCall: {
+                  type: call.call_type,
+                  contact: {
+                    id: call.caller,
+                    name: call.caller_name || 'LocalFix Client',
+                    avatar: call.caller_avatar,
+                    phone: call.caller_phone,
+                  },
+                  status: 'ringing',
+                  duration: 0,
+                  isMuted: false,
+                  isCameraOff: false,
+                  isSpeakerOn: true,
+                  isMinimized: false,
+                  callId: call.id,
+                  isIncoming: true,
+                  offer: call.offer,
+                },
+              })
+              playChatSound('ring')
+            }
+          } else {
+            if (get().incomingCall) {
+              set({ incomingCall: null })
+            }
+          }
+        } catch {
+          // offline
+        }
+      },
+
+      acceptIncomingCall: () => {
+        const inc = get().incomingCall
+        if (!inc) return
+        set({
+          activeCall: {
+            ...inc,
+            status: 'connected',
+          },
+          incomingCall: null,
+        })
+        playChatSound('connect')
+      },
+
+      declineIncomingCall: async () => {
+        const inc = get().incomingCall
+        if (!inc) return
+        set({ incomingCall: null })
+        playChatSound('end')
+        if (inc.callId) {
+          try {
+            await chatApi.endCallSession(inc.callId, 'rejected')
+          } catch {}
+        }
       },
 
       toggleCallMute: () => {
