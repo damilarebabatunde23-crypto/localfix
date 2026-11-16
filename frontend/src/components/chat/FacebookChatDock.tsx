@@ -137,10 +137,10 @@ export default function FacebookChatDock() {
               <img
                 src={
                   activeContact?.avatar ||
-                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${activeContact?.name || 'Artisan'}&backgroundColor=6D28D9`
+                  '/logo.jpg'
                 }
-                alt={activeContact?.name}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-primary-400"
+                alt={activeContact?.name || 'LocalFix Concierge'}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-primary-400 bg-[#1e1538]"
               />
               <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#1c1630]" />
               {unreadTotal > 0 && (
@@ -150,12 +150,12 @@ export default function FacebookChatDock() {
               )}
             </div>
             <div className="hidden sm:block text-left pr-2">
-              <div className="text-white text-xs font-bold leading-tight truncate max-w-[120px]">
-                {activeContact?.name || 'Messenger'}
+              <div className="text-white text-xs font-bold leading-tight truncate max-w-[130px]">
+                {activeContact?.name || 'LocalFix Support'}
               </div>
               <div className="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                Active now
+                Active now · Help
               </div>
             </div>
             <ChevronDown className="w-4 h-4 text-primary-300" />
@@ -190,23 +190,23 @@ export default function FacebookChatDock() {
                   <img
                     src={
                       activeContact?.avatar ||
-                      `https://api.dicebear.com/7.x/avataaars/svg?seed=${activeContact?.name || 'Artisan'}&backgroundColor=6D28D9`
+                      '/logo.jpg'
                     }
-                    alt={activeContact?.name}
-                    className="w-9 h-9 rounded-full object-cover border border-primary-400/40"
+                    alt={activeContact?.name || 'LocalFix Concierge'}
+                    className="w-9 h-9 rounded-full object-cover border border-primary-400/40 bg-[#1e1538]"
                   />
                   <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#1c1630]" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-white text-xs font-bold truncate max-w-[140px]">
-                      {activeContact?.name || 'LocalFix Artisan'}
+                    <span className="text-white text-xs font-bold truncate max-w-[150px]">
+                      {activeContact?.name || 'LocalFix Concierge'}
                     </span>
                     <ShieldCheck className="w-3.5 h-3.5 text-primary-400 flex-shrink-0" />
                   </div>
                   <div className="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    Active now · Escrow Safe
+                    Official Platform Support · Escrow Safe
                   </div>
                 </div>
               </div>
@@ -319,10 +319,10 @@ export default function FacebookChatDock() {
                         <img
                           src={
                             activeContact?.avatar ||
-                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${activeContact?.name || 'Artisan'}&backgroundColor=6D28D9`
+                            '/logo.jpg'
                           }
                           alt=""
-                          className="w-6 h-6 rounded-full object-cover flex-shrink-0 mb-0.5"
+                          className="w-6 h-6 rounded-full object-cover flex-shrink-0 mb-0.5 bg-[#1e1538]"
                         />
                       )}
 
@@ -484,6 +484,26 @@ export default function FacebookChatDock() {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* ── Quick LocalFix Assistance Prompts ── */}
+            {activeContact?.id === 'localfix-concierge' && (
+              <div className="px-2.5 py-1.5 bg-[#171129] border-t border-primary-500/15 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                {[
+                  '🛠️ How do I book an artisan?',
+                  '🛡️ How does Escrow protection work?',
+                  '⚡ Find urgent repairs near me',
+                  '❓ What is the LocalFix guarantee?',
+                ].map((chip) => (
+                  <button
+                    key={chip}
+                    onClick={() => sendMessage(chip)}
+                    className="flex-shrink-0 px-2.5 py-1 rounded-full bg-primary-950/80 hover:bg-primary-900 border border-primary-500/30 text-primary-200 text-[10px] font-medium transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* ── Bottom Input Bar (Facebook Messenger Style) ── */}
             <div

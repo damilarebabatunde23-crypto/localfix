@@ -1,7 +1,12 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { chatApi } from '@/lib/api'
-import { MOCK_WORKERS } from '@/lib/utils'
+
+// Purge any stale legacy chat storage immediately
+try {
+  localStorage.removeItem('localfix-chat-v2')
+  localStorage.removeItem('localfix-chat')
+} catch {}
 
 export interface ChatContact {
   id: string
@@ -77,9 +82,25 @@ interface ChatStoreState {
   declineIncomingCall: () => Promise<void>
 }
 
-const DEFAULT_CONTACT: ChatContact | null = null
+export const LOCALFIX_CONCIERGE_CONTACT: ChatContact = {
+  id: 'localfix-concierge',
+  name: 'LocalFix Concierge',
+  avatar: '/logo.jpg',
+  role: 'Official Platform Concierge',
+  online: true,
+  phone: '+234 800 LOCALFIX',
+  conversationId: 'conv-localfix-concierge',
+}
 
-const DEFAULT_MESSAGES: ChatMessageItem[] = []
+export const LOCALFIX_WELCOME_MESSAGES: ChatMessageItem[] = [
+  {
+    id: 'lf-welcome-1',
+    senderId: 'other',
+    text: 'Hello! Welcome to LocalFix 👋 I am your automated LocalFix Concierge. How can I help you today? Ask me about finding verified artisans, on-demand repairs, booking guarantees, or how our Escrow protection keeps your money 100% safe!',
+    time: 'Just now',
+    read: true,
+  },
+]
 
 // Play sound using Web Audio API
 export const playChatSound = (type: 'pop' | 'ring' | 'end' | 'connect') => {
@@ -152,11 +173,11 @@ export const playChatSound = (type: 'pop' | 'ring' | 'end' | 'connect') => {
 export const useChatStore = create<ChatStoreState>()(
   persist(
     (set, get) => ({
-      isOpen: false,
+      isOpen: true,
       isMinimized: true,
-      activeContact: null,
-      activeConversationId: null,
-      messages: DEFAULT_MESSAGES,
+      activeContact: LOCALFIX_CONCIERGE_CONTACT,
+      activeConversationId: 'conv-localfix-concierge',
+      messages: LOCALFIX_WELCOME_MESSAGES,
       isTyping: false,
       conversations: [],
       unreadTotal: 0,
@@ -168,16 +189,15 @@ export const useChatStore = create<ChatStoreState>()(
       },
 
       openChat: async (contact, conversationId) => {
-        const current = get().activeContact
-        if (!contact && !current) return
+        const current = get().activeContact || LOCALFIX_CONCIERGE_CONTACT
         const targetContact: ChatContact = {
-          id: contact?.id || current?.id || '',
-          name: contact?.name || current?.name || 'LocalFix User',
-          avatar: contact?.avatar || current?.avatar,
-          role: contact?.role || current?.role || 'Member',
+          id: contact?.id || current.id,
+          name: contact?.name || current.name,
+          avatar: contact?.avatar || current.avatar,
+          role: contact?.role || current.role,
           online: contact?.online ?? true,
-          conversationId: conversationId || contact?.conversationId || current?.conversationId,
-          phone: contact?.phone || current?.phone,
+          conversationId: conversationId || contact?.conversationId || current.conversationId,
+          phone: contact?.phone || current.phone,
         }
 
         set({
@@ -301,8 +321,52 @@ export const useChatStore = create<ChatStoreState>()(
         }))
         playChatSound('pop')
 
-        let convId = get().activeConversationId
         const activeContact = get().activeContact
+
+        // Specialized LocalFix Concierge Assistant handler
+        if (activeContact?.id === 'localfix-concierge' || activeContact?.id === 'localfix-support') {
+          set({ isTyping: true })
+          try {
+            const { assistantApi } = await import('@/lib/api')
+            const { useAppStore } = await import('@/stores/useAppStore')
+            const currency = useAppStore.getState().currency
+            const location = useAppStore.getState().locationName
+
+            const reply = await assistantApi.sendChat(trimmed, 'concierge-session', currency, location)
+            const replyText = reply?.message || reply?.text || "Welcome to LocalFix! We connect you with verified local artisans, protect payments with Escrow, and guarantee service delivery. How can I assist you with your repair today?"
+            
+            const aiMsg: ChatMessageItem = {
+              id: `msg-lf-${Date.now()}`,
+              senderId: 'other',
+              text: replyText,
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              read: true,
+            }
+            set((state) => ({
+              messages: [...state.messages, aiMsg],
+              isTyping: false,
+            }))
+            playChatSound('pop')
+          } catch {
+            setTimeout(() => {
+              const aiMsg: ChatMessageItem = {
+                id: `msg-lf-${Date.now()}`,
+                senderId: 'other',
+                text: "Thanks for messaging LocalFix Concierge! 🛠️ All our artisans are verified, and your payments remain safe in Escrow until you sign off on the completed work. What service or repair are you looking for today?",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                read: true,
+              }
+              set((state) => ({
+                messages: [...state.messages, aiMsg],
+                isTyping: false,
+              }))
+              playChatSound('pop')
+            }, 600)
+          }
+          return
+        }
+
+        let convId = get().activeConversationId
 
         // If no convId yet, create real conversation in backend
         if (!convId && activeContact?.id) {
@@ -562,7 +626,7 @@ export const useChatStore = create<ChatStoreState>()(
       },
     }),
     {
-      name: 'localfix-chat-v2',
+      name: 'localfix-chat-v4',
       partialize: (state) => ({
         isOpen: state.isOpen,
         isMinimized: state.isMinimized,
@@ -570,6 +634,31 @@ export const useChatStore = create<ChatStoreState>()(
         activeConversationId: state.activeConversationId,
         messages: state.messages,
       }),
+      onRehydrateStorage: () => (state) => {
+        try {
+          localStorage.removeItem('localfix-chat-v2')
+          localStorage.removeItem('localfix-chat-v3')
+          localStorage.removeItem('localfix-chat')
+        } catch {}
+
+        if (state) {
+          const contact = state.activeContact
+          if (
+            !contact ||
+            contact.name?.toLowerCase().includes('marcus') ||
+            contact.name?.toLowerCase().includes('sterling') ||
+            contact.name?.toLowerCase().includes('tunde') ||
+            contact.id === '1' ||
+            contact.id === '2'
+          ) {
+            state.activeContact = LOCALFIX_CONCIERGE_CONTACT
+            state.activeConversationId = 'conv-localfix-concierge'
+            state.messages = LOCALFIX_WELCOME_MESSAGES
+            state.isOpen = true
+            state.isMinimized = true
+          }
+        }
+      },
     }
   )
 )
