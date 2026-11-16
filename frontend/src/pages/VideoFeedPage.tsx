@@ -26,78 +26,9 @@ const TRENDING_TOPICS = [
   '#PlumbingHacks', '#InverterSetup', '#LocalFix', '#DIYRepair', '#RoofSealant', '#TileGrouting',
 ]
 
-const TOP_CRAFTSMEN = [
-  { handle: '@TundePlumbing', rating: 4.9, fixes: 140 },
-  { handle: '@AdeolaSolarTech', rating: 5.0, fixes: 98 },
-  { handle: '@IbrahimJoinery', rating: 4.8, fixes: 64 },
-]
-
-const DEFAULT_COMMENTS = [
-  {
-    id: 'c1', user: '@TundePlumbing', role: 'CREATOR', text: 'Note: Remember to wrap Teflon tape CLOCKWISE with pipe threading. Counter-clockwise will unwind as you screw the compression nut!',
-    likes: 248, time: '', isPinned: true,
-  },
-  {
-    id: 'c2', user: 'Chidinma_E', role: '', text: 'Bro saved my kitchen floor this morning! Had water pooling under the sink and this exact seal stopped it until replacement parts came.',
-    likes: 42, time: '14min ago', isPinned: false,
-  },
-  {
-    id: 'c3', user: 'Kolawole_B', role: '', text: 'Does this work on PVC joints or only copper/galvanized pipes? My overhead tank connector is PVC.',
-    likes: 19, time: '2h ago', isPinned: false,
-    reply: {
-      user: '@TundePlumbing', text: 'Kolawole_B For PVC, use PVC cement solvent on the internal socket. Compression ring only works on threaded fittings!', time: '1h ago', likes: 31,
-    },
-  },
-  {
-    id: 'c4', user: 'Sarah_K', role: '', text: 'Alex fixed my subpanel and installed the Tesla wall charger yesterday. Top notch master craftsman. Very tidy and professional!',
-    likes: 7, time: '4h ago', isPinned: false,
-  },
-]
-
-const FALLBACK_VIDEOS = [
-  {
-    id: 'vid1',
-    creator: { handle: '@AlexElectric', displayName: 'Alex Chen', isPro: true, yearsExp: 11, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face' },
-    thumbnail: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=700&fit=crop',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-repairing-a-pipe-fitting-41584-large.mp4',
-    title: 'Fixing a leaking pipe joint in 60 seconds without draining the entire house water tank! Quick seal...',
-    hashtags: ['#PlumbingHacks', '#LocalFix', '#DIYRepair', '#ProHandyman'],
-    category: '🔧 Plumbing Joint Fix',
-    location: 'New York, USA',
-    audio: 'Original Audio - Artisan Workshop Acoustics (Brooklyn Studio)',
-    likes: 14200, comments: 842, shares: 2100, saves: 890,
-    duration: 60, currentTime: 58,
-    isWatching: 4200,
-    isLiked: false,
-    isSaved: false,
-    nearbyWorker: {
-      id: '1',
-      name: 'Alex', distance: '1.2km', eta: '~15 min',
-      calloutRate: 85, isActive: true,
-    },
-  },
-  {
-    id: 'vid2',
-    creator: { handle: '@MarcusHVAC', displayName: 'Marcus Sterling', isPro: true, yearsExp: 14, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face' },
-    thumbnail: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?w=400&h=700&fit=crop',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-repairing-a-pipe-fitting-41584-large.mp4',
-    title: 'How to calculate your heat pump & battery runtime before winter storm power interruptions!',
-    hashtags: ['#HeatPump', '#CleanEnergy', '#DIYRepair'],
-    category: '⚡ HVAC & Heat Pumps',
-    location: 'London, UK',
-    audio: 'Original Audio - Solar Craft Audio Lab (London)',
-    likes: 8900, comments: 412, shares: 1420, saves: 650,
-    duration: 75, currentTime: 50,
-    isWatching: 3100,
-    isLiked: false,
-    isSaved: false,
-    nearbyWorker: {
-      id: '2',
-      name: 'Marcus', distance: '2.1km', eta: '~20 min',
-      calloutRate: 75, isActive: true,
-    },
-  },
-]
+const TOP_CRAFTSMEN: any[] = []
+const DEFAULT_COMMENTS: any[] = []
+const FALLBACK_VIDEOS: any[] = []
 
 const LIKED_VIDEOS_STORAGE_KEY = 'localfix_feed_liked_videos'
 
@@ -383,7 +314,7 @@ export default function VideoFeedPage() {
     loadVideos()
   }, [activeTab])
 
-  const video = videos[currentIndex] || FALLBACK_VIDEOS[0]
+  const video = videos[currentIndex] || null
 
   // Synchronize actual video playback with isPlaying and video changes
   useEffect(() => {
@@ -862,10 +793,15 @@ export default function VideoFeedPage() {
               <span className="text-primary-400 text-xs font-semibold">LEADERBOARD</span>
             </div>
             <div className="space-y-3">
-              {TOP_CRAFTSMEN.map((c) => (
+              {TOP_CRAFTSMEN.length === 0 ? (
+                <div className="py-6 text-center text-gray-400 text-xs">
+                  New verified craftsmen joining soon.
+                </div>
+              ) : (
+                TOP_CRAFTSMEN.map((c) => (
                 <div key={c.handle} className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-700 to-primary-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                    {c.handle[1].toUpperCase()}
+                    {c.handle[1]?.toUpperCase() || 'C'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-white text-xs font-semibold truncate">{c.handle}</div>
@@ -883,15 +819,32 @@ export default function VideoFeedPage() {
                     Follow
                   </button>
                 </div>
-              ))}
+              )))}
             </div>
           </div>
         </aside>
 
         {/* Center: Video player & TikTok Interactive Experience */}
         <div className="space-y-4 flex flex-col items-center w-full">
-          {/* Top Video Navigation & Fix Counter Bar */}
-          <div className="flex items-center justify-between w-full max-w-[460px] px-1 text-xs">
+          {!video ? (
+            <div className="w-full max-w-[460px] h-[550px] glass-panel rounded-3xl p-8 flex flex-col items-center justify-center text-center">
+              <div className="w-16 h-16 rounded-2xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center mb-4">
+                <Video className="w-8 h-8 text-primary-400" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">No Repair Videos Yet</h3>
+              <p className="text-xs text-gray-400 max-w-xs mb-6">Be the first artisan or resident to post an on-site fix or DIY tutorial.</p>
+              <button
+                type="button"
+                onClick={() => setIsUploadModalOpen(true)}
+                className="px-5 py-2.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold transition-all shadow-md"
+              >
+                + Upload Repair Video
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Top Video Navigation & Fix Counter Bar */}
+              <div className="flex items-center justify-between w-full max-w-[460px] px-1 text-xs">
             <div className="flex items-center gap-2 font-semibold px-3.5 py-1.5 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-white shadow-md">
               <span className="text-primary-400 font-bold">Fix {currentIndex + 1} of {videos.length}</span>
               <span className="text-gray-400">·</span>
@@ -1271,35 +1224,39 @@ export default function VideoFeedPage() {
           </div>
 
           {/* Worker CTA bar */}
-          <div className="glass-panel rounded-2xl p-4 border border-primary-500/20 w-full max-w-[530px]">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Wrench className="w-4 h-4 text-primary-400" />
-                <span className="text-white text-sm font-semibold">
-                  Need rapid repair in {locationName.split(',')[0]}?
-                </span>
+          {video.nearbyWorker && (
+            <div className="glass-panel rounded-2xl p-4 border border-primary-500/20 w-full max-w-[530px]">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Wrench className="w-4 h-4 text-primary-400" />
+                  <span className="text-white text-sm font-semibold">
+                    Need rapid repair in {locationName.split(',')[0]}?
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMapModalOpen(true)}
+                  className="px-2.5 py-1 rounded-lg text-xs font-semibold text-primary-300 hover:text-white bg-primary-950/70 border border-primary-500/30 flex items-center gap-1 transition-all"
+                >
+                  <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Map</span>
+                </button>
               </div>
+              <p className="text-gray-400 text-xs mb-3 flex items-center justify-between">
+                <span>{video.nearbyWorker.name} is active {video.nearbyWorker.distance} away from your pin</span>
+                <span className="text-primary-300 font-medium">Est. {video.nearbyWorker.eta}</span>
+              </p>
               <button
-                type="button"
-                onClick={() => setIsMapModalOpen(true)}
-                className="px-2.5 py-1 rounded-lg text-xs font-semibold text-primary-300 hover:text-white bg-primary-950/70 border border-primary-500/30 flex items-center gap-1 transition-all"
+                onClick={() => navigate(`/book/${video.nearbyWorker.id}`)}
+                className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-98"
+                style={{ background: 'linear-gradient(135deg,#6D28D9,#7C3AED)', boxShadow: '0 4px 16px rgba(109,40,217,0.4)' }}
               >
-                <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Map</span>
+                📋 Request Direct Quote from {video.nearbyWorker.name}
               </button>
             </div>
-            <p className="text-gray-400 text-xs mb-3 flex items-center justify-between">
-              <span>{video.nearbyWorker.name} is active {video.nearbyWorker.distance} away from your pin</span>
-              <span className="text-primary-300 font-medium">Est. {video.nearbyWorker.eta}</span>
-            </p>
-            <button
-              onClick={() => navigate(`/book/${video.nearbyWorker.id}`)}
-              className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-98"
-              style={{ background: 'linear-gradient(135deg,#6D28D9,#7C3AED)', boxShadow: '0 4px 16px rgba(109,40,217,0.4)' }}
-            >
-              📋 Request Direct Quote from {video.nearbyWorker.name}
-            </button>
-          </div>
+          )}
+          </>
+          )}
         </div>
 
         {/* Right sidebar: Community Feed */}
@@ -1314,7 +1271,12 @@ export default function VideoFeedPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto no-scrollbar space-y-3 pr-1">
-              {comments.map((comment) => (
+              {comments.length === 0 ? (
+                <div className="py-12 text-center text-gray-400 text-xs">
+                  No community comments yet.
+                </div>
+              ) : (
+                comments.map((comment) => (
                 <div
                   key={comment.id}
                   className={cn('p-3 rounded-xl', comment.isPinned ? 'border border-primary-700/40' : '')}
@@ -1383,7 +1345,7 @@ export default function VideoFeedPage() {
                     </div>
                   )}
                 </div>
-              ))}
+              )))}
             </div>
 
             {/* Comment input */}

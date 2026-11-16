@@ -404,40 +404,6 @@ class AssistantChatView(APIView):
                 'callout_rate': f"{rate_formatted} / callout"
             })
 
-        if len(worker_data) == 0:
-            FALLBACK_MOCK = {
-                'electrician': [
-                    {'name': 'Alex Chen', 'profession': 'Master Electrician & EV Charging', 'rating': 4.98, 'usd_rate': 85},
-                    {'name': 'Emeka Okafor', 'profession': 'Solar Inverter & Microgrid Tech', 'rating': 4.96, 'usd_rate': 65},
-                ],
-                'plumber': [
-                    {'name': 'David Miller', 'profession': 'Licensed Master Plumber', 'rating': 4.93, 'usd_rate': 75},
-                    {'name': 'Amina Hassan', 'profession': 'Borehole & Solar Pumping Engineer', 'rating': 4.91, 'usd_rate': 60},
-                ],
-                'ac-fridge': [
-                    {'name': 'Marcus Sterling', 'profession': 'Commercial HVAC & Heat Pumps', 'rating': 4.95, 'usd_rate': 75},
-                    {'name': 'Tunde Adeleke', 'profession': 'Chiller & Split AC Diagnostic Tech', 'rating': 4.92, 'usd_rate': 55},
-                ],
-                'generator': [
-                    {'name': 'Viktor Brandt', 'profession': 'Industrial Generator & Diesel Mechanic', 'rating': 4.94, 'usd_rate': 80},
-                ],
-                'carpenter': [
-                    {'name': 'Samuel Evans', 'profession': 'Master Joiner & Finish Carpenter', 'rating': 4.97, 'usd_rate': 70},
-                ]
-            }
-            curr_info = CURRENCY_RATES.get(currency, CURRENCY_RATES['USD'])
-            cat_mocks = FALLBACK_MOCK.get(category_slug, FALLBACK_MOCK.get('electrician', []))
-            for i, m in enumerate(cat_mocks):
-                c_rate = m['usd_rate'] * curr_info['rate']
-                worker_data.append({
-                    'id': f"m{i+1}",
-                    'name': m['name'],
-                    'avatar': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop' if i%2==0 else 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop',
-                    'profession': m['profession'],
-                    'rating': m['rating'],
-                    'callout_rate': f"{curr_info['fmt'].format(c_rate)} / callout"
-                })
-
         return worker_data
 
     def call_gemini(self, text, currency, location, photo_url, api_key):

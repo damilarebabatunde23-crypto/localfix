@@ -290,23 +290,24 @@ export default function HomePage() {
             {/* AC Installation feature */}
             <div
               onClick={() => {
-                const target = workers.find((w) => w.profession.toLowerCase().includes('ac') || w.profession.toLowerCase().includes('hvac')) || workers[0]
+                const target = workers.find((w) => w.profession.toLowerCase().includes('ac') || w.profession.toLowerCase().includes('hvac')) || (workers.length > 0 ? workers[0] : null)
                 if (target) navigate(`/workers/${target.id}`)
+                else navigate('/map')
               }}
               className="md:col-span-1 glass-panel rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary-600/40 transition-all"
             >
-              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-2xl flex-shrink-0">❄️</div>
+              <div className="w-12 h-12 rounded-xl bg-primary-500/20 flex items-center justify-center text-2xl flex-shrink-0">⚡</div>
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-white text-sm font-semibold">Dual Inverter AC Overhaul</span>
+                  <span className="text-white text-sm font-semibold">Verified On-Demand Repairs</span>
                   <span className="lf-badge-purple text-[10px]">VERIFIED</span>
                 </div>
                 <div className="text-gray-400 text-xs">
-                  <strong className="text-primary-300">Ngozi</strong> from Master HVAC · 7 yrs exp | Rate: ₦9,500/Callout
+                  Vetted Artisans On Standby · Full Escrow Workmanship Protection
                 </div>
                 <div className="flex items-center gap-3 mt-1.5">
-                  <span className="text-green-400 text-xs font-semibold">● Available Now</span>
-                  <button className="text-primary-400 text-xs font-medium">Distance: 1.8km →</button>
+                  <span className="text-green-400 text-xs font-semibold">● Active Network</span>
+                  <button className="text-primary-400 text-xs font-medium">Explore Map →</button>
                 </div>
               </div>
             </div>
@@ -539,50 +540,43 @@ export default function HomePage() {
               </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {(neighborhoodVideos.length > 0 ? neighborhoodVideos : [
-                {
-                  id: 'v1',
-                  title: 'How to diagnose generator carburetor blockage',
-                  thumbnail: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=200&fit=crop',
-                  views: '37.8k',
-                  creator: '@adeolasolartech',
-                  duration: '4:23',
-                },
-                {
-                  id: 'v2',
-                  title: 'Brazing copper lines for dual VRF outdoor AC',
-                  thumbnail: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=300&h=200&fit=crop',
-                  views: '7.4k',
-                  creator: '@ngozi_hvac',
-                  duration: '2:41',
-                },
-              ]).map((v) => (
-                <div key={v.id} className="lf-card cursor-pointer group" onClick={() => navigate('/feed')}>
-                  <div className="relative rounded-xl overflow-hidden mb-3">
-                    <img
-                      src={v.thumbnail}
-                      alt={v.title}
-                      className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                        <Play className="w-5 h-5 text-white fill-white" />
+              {neighborhoodVideos.length === 0 ? (
+                <div className="col-span-full p-8 glass-panel rounded-2xl text-center text-gray-400">
+                  <p className="text-sm font-semibold text-white mb-1">No community videos uploaded yet</p>
+                  <p className="text-xs text-gray-400 mb-4">Be the first artisan or resident to share an on-site fix or DIY clip.</p>
+                  <button onClick={() => navigate('/feed')} className="px-4 py-2 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold transition-all shadow-md cursor-pointer">
+                    + Share First Video
+                  </button>
+                </div>
+              ) : (
+                neighborhoodVideos.map((v) => (
+                  <div key={v.id} className="lf-card cursor-pointer group" onClick={() => navigate('/feed')}>
+                    <div className="relative rounded-xl overflow-hidden mb-3">
+                      <img
+                        src={v.thumbnail}
+                        alt={v.title}
+                        className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                          <Play className="w-5 h-5 text-white fill-white" />
+                        </div>
+                      </div>
+                      <div
+                        className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded-md text-[10px] text-white font-medium"
+                        style={{ background: 'rgba(0,0,0,0.7)' }}
+                      >
+                        {v.duration}
                       </div>
                     </div>
-                    <div
-                      className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded-md text-[10px] text-white font-medium"
-                      style={{ background: 'rgba(0,0,0,0.7)' }}
-                    >
-                      {v.duration}
+                    <p className="text-white text-xs font-medium line-clamp-2 mb-1">{v.title}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-primary-400 text-[10px]">{v.creator}</span>
+                      <span className="text-gray-500 text-[10px]">{v.views} views</span>
                     </div>
                   </div>
-                  <p className="text-white text-xs font-medium line-clamp-2 mb-1">{v.title}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-primary-400 text-[10px]">{v.creator}</span>
-                    <span className="text-gray-500 text-[10px]">{v.views} views</span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
