@@ -129,11 +129,14 @@ class ConversationDetailView(generics.RetrieveAPIView):
 class MessageListCreateView(generics.ListCreateAPIView):
     serializer_class = ChatMessageSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
 
     def get_queryset(self):
         conv_id = self.kwargs.get('id')
         conv = get_object_or_404(Conversation, id=conv_id, participants=self.request.user)
-        return conv.messages.all()
+        # Mark incoming messages as read when retrieved by the participant
+        conv.messages.filter(is_read=False).exclude(sender=self.request.user).update(is_read=True)
+        return conv.messages.all().order_by('created_at')
 
     def perform_create(self, serializer):
         conv_id = self.kwargs.get('id')

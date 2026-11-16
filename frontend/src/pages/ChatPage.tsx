@@ -77,88 +77,137 @@ export default function ChatPage() {
     }).catch(() => {})
   }, [])
 
-  // Check query params to preselect worker or thread
-  useEffect(() => {
-    const workerParam = searchParams.get('worker')
-    const convParam = searchParams.get('conversation')
-
-    if (workerParam) {
-      servicesApi.getWorkerDetail(workerParam).then((res: any) => {
-        if (res) {
-          const nw = normalizeWorker(res)
-          useChatStore.setState({ messages: [] })
-          const customThread = {
-            id: `worker-${nw.id}`,
-            user: {
-              id: nw.id,
-              name: nw.displayName,
-              avatar: nw.avatar,
-              role: nw.profession,
-              online: true,
-              phone: nw.phone,
-            },
-            lastMessage: 'Ready to discuss requirements.',
-            time: 'Just now',
-            unread: 0,
-          }
-          setThreads((prev) => [customThread, ...prev.filter((t) => t.id !== customThread.id)])
-          setSelectedThreadId(customThread.id)
-          setMobileView('chat')
-          useChatStore.getState().openChat(customThread.user, undefined)
-        }
-      }).catch(() => {})
-    } else if (convParam) {
-      useChatStore.setState({ messages: [] })
-      setSelectedThreadId(convParam)
-      setMobileView('chat')
-    }
-  }, [searchParams])
-
-  // Fetch real conversation threads from backend
+  // Fetch real conversation threads from backend and preselect by query params
   useEffect(() => {
     if (!isAuthenticated) return
-    const fetchBackendThreads = async () => {
-      try {
-        const convs = await chatApi.getConversations()
-        if (Array.isArray(convs) && convs.length > 0) {
-          const convParam = searchParams.get('conversation')
-          const mapped = convs.map((c: any) => ({
-            id: c.id,
-            user: {
-              id: c.other_participant?.id,
-              name: `${c.other_participant?.first_name || ''} ${c.other_participant?.last_name || ''}`.trim() || 'LocalFix User',
-              avatar: c.other_participant?.avatar,
-              role: c.other_participant?.role || 'Member',
-              online: true,
-              phone: c.other_participant?.phone,
-            },
-            lastMessage: c.last_message?.content || 'Conversation started',
-            time: c.last_message?.created_at
-              ? new Date(c.last_message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-              : 'Recently',
-            unread: c.unread_count || 0,
-          }))
-          setThreads(mapped)
 
-          if (convParam) {
-            const match = mapped.find((m: any) => m.id === convParam)
-            if (match) {
-              setSelectedThreadId(match.id)
+    let isMounted = true
+    const initChatThreads = async () => {
+      try {
+        const workerParam = searchParams.get('worker')
+        const convParam = searchParams.get('conversation')
+
+        const rawConvs = await chatApi.getConversations()
+        const convList = Array.isArray(rawConvs) ? rawConvs : rawConvs?.results || []
+
+        let mapped = convList.map((c: any) => ({
+          id: String(c.id),
+          conversationId: String(c.id),
+          user: {
+            id: String(c.other_participant?.id || ''),
+            name: `${c.other_participant?.first_name || ''} ${c.other_participant?.last_name || ''}`.trim() || 'LocalFix User',
+            avatar: c.other_participant?.avatar,
+            role: c.other_participant?.role || 'Member',
+            online: true,
+            phone: c.other_participant?.phone,
+            conversationId: String(c.id),
+          },
+          lastMessage: c.last_message?.content || 'Conversation started',
+          time: c.last_message?.created_at
+            ? new Date(c.last_message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : 'Recently',
+          unread: c.unread_count || 0,
+        }))
+
+        // Deduplicate any repeat conversations by participant user ID
+        const seenUserIds = new Set<string>()
+        mapped = mapped.filter((t: any) => {
+          if (!t.user.id) return true
+          if (seenUserIds.has(t.user.id)) return false
+          seenUserIds.add(t.user.id)
+          return true
+        })
+
+        // If workerParam is provided: check if conversation already exists or start one!
+        if (workerParam) {
+          const existingThread = mapped.find(
+            (t: any) => String(t.user.id) === String(workerParam) || t.id === String(workerParam)
+          )
+
+          if (existingThread) {
+            if (!isMounted) return
+            setThreads(mapped)
+            setSelectedThreadId(existingThread.id)
+            setMobileView('chat')
+            useChatStore.setState({ messages: [] })
+            useChatStore.getState().openChat(existingThread.user, existingThread.id)
+            return
+          }
+
+          // Conversation doesn't exist yet: create real backend conversation
+          try {
+            const newConv = await chatApi.startConversation({
+              worker_id: workerParam,
+              recipient_id: workerParam,
+            })
+            if (newConv && newConv.id) {
+              const newThread = {
+                id: String(newConv.id),
+                conversationId: String(newConv.id),
+                user: {
+                  id: String(newConv.other_participant?.id || workerParam),
+                  name: `${newConv.other_participant?.first_name || ''} ${newConv.other_participant?.last_name || ''}`.trim() || 'Artisan',
+                  avatar: newConv.other_participant?.avatar,
+                  role: newConv.other_participant?.role || 'Artisan',
+                  online: true,
+                  phone: newConv.other_participant?.phone,
+                  conversationId: String(newConv.id),
+                },
+                lastMessage: 'Ready to connect!',
+                time: 'Just now',
+                unread: 0,
+              }
+              const deduplicated = [
+                newThread,
+                ...mapped.filter((t: any) => t.id !== newThread.id && t.user.id !== newThread.user.id),
+              ]
+              if (!isMounted) return
+              setThreads(deduplicated)
+              setSelectedThreadId(newThread.id)
               setMobileView('chat')
-              useChatStore.getState().openChat(match.user, match.id)
-            } else {
-              setSelectedThreadId(convParam)
-              setMobileView('chat')
+              useChatStore.setState({ messages: [] })
+              useChatStore.getState().openChat(newThread.user, newThread.id)
+              return
             }
-          } else if (!selectedThreadId || selectedThreadId === 'thread-1') {
-            setSelectedThreadId(mapped[0].id)
+          } catch {
+            // Local fallback
           }
         }
+
+        // If convParam is provided
+        if (convParam) {
+          const match = mapped.find((t: any) => t.id === convParam)
+          if (!isMounted) return
+          setThreads(mapped)
+          if (match) {
+            setSelectedThreadId(match.id)
+            setMobileView('chat')
+            useChatStore.setState({ messages: [] })
+            useChatStore.getState().openChat(match.user, match.id)
+          } else {
+            setSelectedThreadId(convParam)
+            setMobileView('chat')
+          }
+          return
+        }
+
+        // Default: select first thread if none is selected
+        if (!isMounted) return
+        setThreads(mapped)
+        if (mapped.length > 0 && !selectedThreadId) {
+          setSelectedThreadId(mapped[0].id)
+          useChatStore.getState().openChat(mapped[0].user, mapped[0].id)
+        }
       } catch {
-        // Use demo threads
+        // Ignore
       }
     }
-    fetchBackendThreads()
+
+    initChatThreads()
+
+    return () => {
+      isMounted = false
+    }
   }, [isAuthenticated, searchParams])
 
   // Scroll to bottom on new message
@@ -168,11 +217,12 @@ export default function ChatPage() {
 
   // Keep selected thread synced with Zustand store
   useEffect(() => {
-    const thread = threads.find((t) => t.id === selectedThreadId) || threads[0]
+    const thread = threads.find((t) => t.id === selectedThreadId)
     if (thread && thread.user) {
-      useChatStore.getState().openChat(thread.user, thread.id.startsWith('thread-') ? undefined : thread.id)
+      const convId = thread.conversationId || (thread.id.startsWith('worker-') || thread.id.startsWith('active-') ? undefined : thread.id)
+      useChatStore.getState().openChat(thread.user, convId)
     }
-  }, [selectedThreadId, threads])
+  }, [selectedThreadId])
 
   // Real-time synchronization: poll messages every 2.5s for real human conversation
   useEffect(() => {
@@ -180,13 +230,55 @@ export default function ChatPage() {
 
     const interval = setInterval(async () => {
       const activeConvId = useChatStore.getState().activeConversationId
-      if (activeConvId && !activeConvId.startsWith('thread-')) {
+      if (activeConvId && !activeConvId.startsWith('worker-') && !activeConvId.startsWith('thread-') && !activeConvId.startsWith('active-')) {
         await useChatStore.getState().loadMessagesForConversation(activeConvId)
       }
+
+      // Also refresh thread previews so sidebar stays 100% in sync with real messages
+      try {
+        const rawConvs = await chatApi.getConversations()
+        const convList = Array.isArray(rawConvs) ? rawConvs : rawConvs?.results || []
+        if (Array.isArray(convList) && convList.length > 0) {
+          setThreads((prev) => {
+            const mapped = convList.map((c: any) => {
+              const convId = String(c.id)
+              const existing = prev.find((t) => t.id === convId)
+              const isSelected = selectedThreadId === convId
+              return {
+                id: convId,
+                conversationId: convId,
+                user: {
+                  id: String(c.other_participant?.id || ''),
+                  name: `${c.other_participant?.first_name || ''} ${c.other_participant?.last_name || ''}`.trim() || existing?.user?.name || 'LocalFix User',
+                  avatar: c.other_participant?.avatar || existing?.user?.avatar,
+                  role: c.other_participant?.role || existing?.user?.role || 'Member',
+                  online: true,
+                  phone: c.other_participant?.phone || existing?.user?.phone,
+                  conversationId: convId,
+                },
+                lastMessage: c.last_message?.content || existing?.lastMessage || 'Conversation started',
+                time: c.last_message?.created_at
+                  ? new Date(c.last_message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  : (existing?.time || 'Recently'),
+                unread: isSelected ? 0 : (c.unread_count || 0),
+              }
+            })
+
+            // Deduplicate by user id
+            const seen = new Set<string>()
+            return mapped.filter((t: any) => {
+              if (!t.user.id) return true
+              if (seen.has(t.user.id)) return false
+              seen.add(t.user.id)
+              return true
+            })
+          })
+        }
+      } catch {}
     }, 2500)
 
     return () => clearInterval(interval)
-  }, [isAuthenticated])
+  }, [isAuthenticated, selectedThreadId])
 
   const handleSendMessage = async (textToSend?: string, mediaUrl?: string, mediaType = 'text') => {
     const content = textToSend ?? input
@@ -194,6 +286,18 @@ export default function ChatPage() {
 
     setInput('')
     setShowEmojiPicker(false)
+
+    // Update sidebar thread immediately for ultra-responsive feedback
+    if (selectedThreadId) {
+      setThreads((prev) =>
+        prev.map((t) =>
+          t.id === selectedThreadId
+            ? { ...t, lastMessage: content || 'Sent an attachment', time: 'Just now' }
+            : t
+        )
+      )
+    }
+
     await sendMessage(content, mediaUrl, mediaType as any)
   }
 
@@ -293,24 +397,52 @@ export default function ChatPage() {
               {activeNow.map((c) => (
                 <div
                   key={c.id}
-                  onClick={() => {
-                    const targetThread = {
-                      id: `active-${c.id}`,
-                      user: {
-                        id: c.id,
-                        name: c.name,
-                        avatar: c.avatar,
-                        role: c.role,
-                        online: true,
-                      },
-                      lastMessage: 'Ready to connect!',
-                      time: 'Active now',
-                      unread: 0,
+                  onClick={async () => {
+                    // Check if a thread with this artisan already exists
+                    const existing = threads.find(
+                      (t) => String(t.user?.id) === String(c.id) || String(t.id) === String(c.id)
+                    )
+                    if (existing) {
+                      setSelectedThreadId(existing.id)
+                      setMobileView('chat')
+                      const convId = existing.conversationId || existing.id
+                      useChatStore.getState().openChat(existing.user, convId)
+                      return
                     }
-                    setThreads((prev) => [targetThread, ...prev.filter((t) => t.id !== targetThread.id)])
-                    setSelectedThreadId(targetThread.id)
-                    setMobileView('chat')
-                    useChatStore.getState().openChat(targetThread.user, undefined)
+
+                    try {
+                      const newConv = await chatApi.startConversation({
+                        worker_id: c.id,
+                        recipient_id: c.id,
+                      })
+                      if (newConv && newConv.id) {
+                        const convId = String(newConv.id)
+                        const targetThread = {
+                          id: convId,
+                          conversationId: convId,
+                          user: {
+                            id: String(newConv.other_participant?.id || c.id),
+                            name: c.name,
+                            avatar: c.avatar,
+                            role: c.role,
+                            online: true,
+                            conversationId: convId,
+                          },
+                          lastMessage: 'Ready to connect!',
+                          time: 'Active now',
+                          unread: 0,
+                        }
+                        setThreads((prev) => [
+                          targetThread,
+                          ...prev.filter(
+                            (t) => t.id !== targetThread.id && String(t.user?.id) !== String(targetThread.user.id)
+                          ),
+                        ])
+                        setSelectedThreadId(targetThread.id)
+                        setMobileView('chat')
+                        useChatStore.getState().openChat(targetThread.user, convId)
+                      }
+                    } catch {}
                   }}
                   className="flex flex-col items-center gap-1 cursor-pointer group flex-shrink-0"
                 >
@@ -346,10 +478,13 @@ export default function ChatPage() {
                   onClick={() => {
                     setSelectedThreadId(thread.id)
                     setMobileView('chat')
-                    useChatStore.setState({ messages: [] })
-                    const convId = thread.id.startsWith('thread-') || thread.id.startsWith('worker-') || thread.id.startsWith('active-')
+                    // Clear unread badge locally immediately
+                    setThreads((prev) =>
+                      prev.map((t) => (t.id === thread.id ? { ...t, unread: 0 } : t))
+                    )
+                    const convId = thread.conversationId || (thread.id.startsWith('thread-') || thread.id.startsWith('worker-') || thread.id.startsWith('active-')
                       ? thread.user.conversationId
-                      : thread.id
+                      : thread.id)
                     useChatStore.getState().openChat(thread.user, convId)
                   }}
                   className={`p-3.5 flex items-center gap-3 cursor-pointer transition-colors ${

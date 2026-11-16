@@ -217,8 +217,15 @@ export const useChatStore = create<ChatStoreState>()(
 
         let resolvedConvId = conversationId || targetContact.conversationId || null
 
-        // If authenticated and no conversation ID yet, create or retrieve the real conversation from Django backend
-        if (!resolvedConvId && targetContact.id) {
+        // If authenticated and no valid backend conversation ID yet, create or retrieve the real conversation from Django backend
+        if (
+          (!resolvedConvId ||
+            resolvedConvId.startsWith('worker-') ||
+            resolvedConvId.startsWith('active-') ||
+            resolvedConvId.startsWith('thread-')) &&
+          targetContact.id &&
+          !isTargetConcierge
+        ) {
           try {
             const { useAppStore } = await import('@/stores/useAppStore')
             if (useAppStore.getState().isAuthenticated) {
@@ -227,9 +234,9 @@ export const useChatStore = create<ChatStoreState>()(
                 recipient_id: targetContact.id,
               })
               if (res && res.id) {
-                resolvedConvId = res.id
-                set({ activeConversationId: res.id })
-                targetContact.conversationId = res.id
+                resolvedConvId = String(res.id)
+                set({ activeConversationId: String(res.id) })
+                targetContact.conversationId = String(res.id)
               }
             }
           } catch {
@@ -272,20 +279,21 @@ export const useChatStore = create<ChatStoreState>()(
           const currentUser = useAppStore.getState().user
           const myId = currentUser?.id
 
-          const liveMsgs = await chatApi.getMessages(convId)
+          const rawMsgs = await chatApi.getMessages(convId)
+          const liveMsgs = Array.isArray(rawMsgs) ? rawMsgs : (rawMsgs?.results || [])
           if (Array.isArray(liveMsgs)) {
             const parsed: ChatMessageItem[] = liveMsgs.map((m: any) => {
               const isSenderMe =
-                (myId && (m.sender === myId || String(m.sender) === String(myId))) ||
+                (myId && (String(m.sender) === String(myId))) ||
                 (currentUser?.email && m.sender_name && currentUser.email.toLowerCase().includes(m.sender_name.toLowerCase())) ||
                 m.sender_name?.toLowerCase().includes('me')
 
               return {
-                id: m.id,
+                id: String(m.id),
                 senderId: isSenderMe ? 'me' : 'other',
-                text: m.content,
-                time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                read: m.is_read,
+                text: m.content || '',
+                time: m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
+                read: Boolean(m.is_read),
                 mediaUrl: m.media_url,
                 mediaType: m.message_type === 'image' ? 'image' : m.media_url ? 'image' : 'text',
               }
@@ -382,8 +390,8 @@ export const useChatStore = create<ChatStoreState>()(
 
         let convId = get().activeConversationId
 
-        // If no convId yet, create real conversation in backend
-        if (!convId && activeContact?.id) {
+        // If no valid backend convId yet, create or retrieve the real conversation from Django backend
+        if ((!convId || convId.startsWith('worker-') || convId.startsWith('active-') || convId.startsWith('thread-')) && activeContact?.id) {
           try {
             const { useAppStore } = await import('@/stores/useAppStore')
             if (useAppStore.getState().isAuthenticated) {
@@ -640,18 +648,18 @@ export const useChatStore = create<ChatStoreState>()(
       },
     }),
     {
-      name: 'localfix-chat-v4',
+      name: 'localfix-chat-v5',
       partialize: (state) => ({
         isOpen: state.isOpen,
         isMinimized: state.isMinimized,
         activeContact: state.activeContact,
         activeConversationId: state.activeConversationId,
-        messages: state.messages,
       }),
       onRehydrateStorage: () => (state) => {
         try {
-          localStorage.removeItem('localfix-chat-v2')
+          localStorage.removeItem('localfix-chat-v4')
           localStorage.removeItem('localfix-chat-v3')
+          localStorage.removeItem('localfix-chat-v2')
           localStorage.removeItem('localfix-chat')
         } catch {}
 
@@ -670,10 +678,14 @@ export const useChatStore = create<ChatStoreState>()(
             state.messages = LOCALFIX_WELCOME_MESSAGES
             state.isOpen = true
             state.isMinimized = true
-          } else if (contact.id !== 'localfix-concierge' && contact.id !== 'localfix-support') {
-            state.messages = (state.messages || []).filter(
-              (m) => m.id !== 'lf-welcome-1' && !m.text.includes('automated LocalFix Concierge')
-            )
+          } else if (contact.id === 'localfix-concierge' || contact.id === 'localfix-support') {
+            state.messages = LOCALFIX_WELCOME_MESSAGES
+          } else {
+            state.messages = []
+            if (state.activeConversationId && !state.activeConversationId.startsWith('worker-')) {
+              // Load fresh messages from database for active human conversation
+              useChatStore.getState().loadMessagesForConversation(state.activeConversationId)
+            }
           }
         }
       },

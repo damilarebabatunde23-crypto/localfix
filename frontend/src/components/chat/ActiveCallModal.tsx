@@ -29,7 +29,15 @@ const ICE_SERVERS: RTCConfiguration = {
     { urls: 'stun:stun3.l.google.com:19302' },
     { urls: 'stun:stun4.l.google.com:19302' },
     { urls: 'stun:stun.services.mozilla.com' },
-    { urls: 'stun:stun.cloudflare.com:3478' },
+    {
+      urls: [
+        'turn:openrelay.metered.ca:80',
+        'turn:openrelay.metered.ca:443',
+        'turn:openrelay.metered.ca:443?transport=tcp',
+      ],
+      username: 'openrelay',
+      credential: 'openrelay',
+    },
   ],
   iceCandidatePoolSize: 10,
 }
@@ -47,7 +55,7 @@ export default function ActiveCallModal() {
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
-  const [layoutMode, setLayoutMode] = useState<'pip' | 'grid'>('pip')
+  const [layoutMode, setLayoutMode] = useState<'grid' | 'pip'>('grid')
   const [isSwapped, setIsSwapped] = useState<boolean>(false)
   const [micLevel, setMicLevel] = useState<number>(0)
   const [hasMediaAccess, setHasMediaAccess] = useState<boolean | null>(null)
@@ -641,7 +649,7 @@ export default function ActiveCallModal() {
                   <div className="absolute bottom-2.5 left-2.5 z-20 flex items-center gap-1.5 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                     <span className="text-xs font-bold text-white">{activeCall.contact.name}</span>
-                    <span className="text-[10px] text-primary-300">({activeCall.contact.role || 'Peer'})</span>
+                    <span className="text-[10px] text-primary-300">({activeCall.contact.role || 'Artisan'})</span>
                   </div>
                 </div>
 
@@ -668,79 +676,81 @@ export default function ActiveCallModal() {
                 </div>
               </div>
             ) : (
-              /* --- PICTURE-IN-PICTURE (PIP) VIEW --- */
+              /* --- PICTURE-IN-PICTURE (PIP) VIEW (No ref-swapping!) --- */
               <div className="w-full h-full relative flex items-center justify-center bg-black">
-                {/* Main Fullscreen Video */}
-                <video
-                  ref={isSwapped ? selfVideoRef : remoteVideoRef}
-                  autoPlay
-                  playsInline
-                  muted={isSwapped}
-                  className={`w-full h-full object-cover transition-opacity duration-300 ${
-                    !isSwapped && !remoteStream ? 'opacity-0' : 'opacity-100'
-                  } ${isSwapped ? '[transform:rotateY(180deg)]' : ''}`}
-                />
-
-                {/* Placeholder when remote stream is loading in main view */}
-                {!isSwapped && !remoteStream && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-[#130f24]">
-                    <div className="relative mb-4">
-                      <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-2 border-primary-500/50 shadow-2xl">
+                {/* View A: Remote Video (Full-screen by default, or Corner if swapped) */}
+                <div
+                  onClick={() => isSwapped && setIsSwapped(false)}
+                  className={`transition-all duration-300 overflow-hidden ${
+                    !isSwapped
+                      ? 'w-full h-full relative'
+                      : 'absolute top-4 right-4 w-28 h-36 sm:w-36 sm:h-48 rounded-2xl border-2 border-primary-400/80 shadow-2xl z-20 cursor-pointer bg-black'
+                  }`}
+                >
+                  <video
+                    ref={remoteVideoRef}
+                    autoPlay
+                    playsInline
+                    className={`w-full h-full object-cover transition-opacity duration-300 ${
+                      remoteStream ? 'opacity-100' : 'opacity-0'
+                    }`}
+                  />
+                  {!remoteStream && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-[#130f24]">
+                      <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-primary-500/50 mb-2 shadow-xl">
                         <img
                           src={
                             activeCall.contact.avatar ||
-                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
-                              activeCall.contact.name
-                            )}&backgroundColor=6D28D9`
+                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(activeCall.contact.name)}&backgroundColor=6D28D9`
                           }
                           alt={activeCall.contact.name}
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      {isRinging && (
-                        <span className="absolute -inset-3 rounded-full border border-primary-400/40 animate-ping" />
-                      )}
+                      <h4 className="text-sm font-bold text-white mb-0.5">{activeCall.contact.name}</h4>
+                      <p className="text-[11px] text-primary-300">
+                        {isRinging ? 'Ringing...' : 'Connecting live stream...'}
+                      </p>
                     </div>
-                    <h4 className="text-lg font-bold text-white mb-1">{activeCall.contact.name}</h4>
-                    <p className="text-xs text-primary-300 font-medium">
-                      {isRinging ? 'Ringing artisan...' : 'Connecting live WebRTC stream...'}
-                    </p>
-                  </div>
-                )}
-
-                {/* Main View Identifier Badge */}
-                <div className="absolute bottom-24 sm:bottom-20 left-4 z-20 flex items-center gap-2 bg-black/75 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-xs font-bold text-white">
-                    {isSwapped ? 'You (Self Feed)' : activeCall.contact.name}
-                  </span>
-                  {!isSwapped && (
-                    <span className="text-[10px] text-primary-300 hidden sm:inline">
-                      ({activeCall.contact.role || 'Artisan'})
-                    </span>
                   )}
+                  <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1.5 bg-black/75 backdrop-blur-md px-2 py-0.5 rounded-lg border border-white/10 text-[10px] text-white">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>{activeCall.contact.name}</span>
+                  </div>
                 </div>
 
-                {/* Corner Picture-in-Picture Feed (Click to Swap Feeds!) */}
+                {/* View B: Self Video (Corner by default, or Full-screen if swapped) */}
                 <div
-                  onClick={() => setIsSwapped(!isSwapped)}
-                  className="absolute top-4 right-4 w-28 h-36 sm:w-36 sm:h-48 rounded-2xl overflow-hidden border-2 border-primary-400/80 shadow-2xl bg-black z-20 cursor-pointer group"
-                  title="Click to swap main and thumbnail view"
-                  style={{ backdropFilter: 'blur(10px)' }}
+                  onClick={() => !isSwapped && setIsSwapped(true)}
+                  className={`transition-all duration-300 overflow-hidden ${
+                    isSwapped
+                      ? 'w-full h-full absolute inset-0 z-10'
+                      : 'absolute top-4 right-4 w-28 h-36 sm:w-36 sm:h-48 rounded-2xl border-2 border-primary-400/80 shadow-2xl z-20 cursor-pointer bg-black group'
+                  }`}
                 >
-                  <video
-                    ref={isSwapped ? remoteVideoRef : selfVideoRef}
-                    autoPlay
-                    playsInline
-                    muted={!isSwapped}
-                    className={`w-full h-full object-cover ${!isSwapped ? '[transform:rotateY(180deg)]' : ''}`}
-                  />
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
-                    <RefreshCw className="w-4 h-4" />
+                  {!activeCall.isCameraOff && hasMediaAccess !== false ? (
+                    <video
+                      ref={selfVideoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover [transform:rotateY(180deg)]"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900 text-gray-400 text-xs gap-1">
+                      <VideoOff className="w-5 h-5 text-gray-500" />
+                      <span className="text-[10px]">Camera Off</span>
+                    </div>
+                  )}
+                  <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1 bg-black/75 backdrop-blur-md px-2 py-0.5 rounded-lg border border-white/10 text-[10px] text-white">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>You</span>
                   </div>
-                  <div className="absolute bottom-1 right-1.5 bg-black/80 px-1.5 py-0.5 rounded text-[9px] text-white">
-                    {isSwapped ? activeCall.contact.name.split(' ')[0] : 'You'}
-                  </div>
+                  {!isSwapped && (
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
+                      <RefreshCw className="w-4 h-4" />
+                    </div>
+                  )}
                 </div>
               </div>
             )

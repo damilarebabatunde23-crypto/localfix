@@ -51,7 +51,7 @@ class ConversationSerializer(serializers.ModelSerializer):
 class CallSessionSerializer(serializers.ModelSerializer):
     caller_name = serializers.CharField(source='caller.full_name', read_only=True)
     caller_avatar = serializers.CharField(source='caller.resolved_avatar', read_only=True)
-    caller_phone = serializers.CharField(source='caller.phone_number', read_only=True)
+    caller_phone = serializers.CharField(source='caller.phone', read_only=True)
     recipient_name = serializers.CharField(source='recipient.full_name', read_only=True)
     recipient_avatar = serializers.CharField(source='recipient.resolved_avatar', read_only=True)
 
