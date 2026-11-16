@@ -605,9 +605,10 @@ export default function AuthPage() {
               })
             }
           },
-          (_errorMsg) => {
+          (errorMsg) => {
             toast.dismiss(toastId)
             setGoogleLoading(false)
+            if (errorMsg) toast(errorMsg, { icon: 'ℹ️' })
             setIsGoogleModalOpen(true)
           }
         )

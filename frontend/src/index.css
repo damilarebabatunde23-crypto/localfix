@@ -66,37 +66,103 @@
                 inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
-  /* Light mode overrides */
-  :root:not(.dark) .glass-panel {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
-    border: 1px solid rgba(109, 40, 217, 0.12);
-    box-shadow: 0 4px 24px rgba(109, 40, 217, 0.08),
-                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  /* ============================================================
+     LIGHT MODE CONTRAST & VISIBILITY ENGINE
+     ============================================================ */
+  :root:not(.dark) {
+    background-color: #FAF9FF !important;
+    color: #111827 !important;
   }
 
-  :root:not(.dark) .lf-card:hover {
-    border-color: rgba(109, 40, 217, 0.25);
-    box-shadow: 0 8px 32px rgba(109, 40, 217, 0.12);
+  :root:not(.dark) body {
+    background-color: #FAF9FF !important;
+    color: #111827 !important;
   }
 
-  /* Light mode text overrides for glass panels */
-  :root:not(.dark) .glass-panel h1.text-white,
-  :root:not(.dark) .glass-panel h2.text-white,
-  :root:not(.dark) .glass-panel h3.text-white,
-  :root:not(.dark) .glass-panel h4.text-white,
-  :root:not(.dark) .glass-panel p.text-white,
-  :root:not(.dark) .glass-panel div > span.text-white {
+  /* Headings everywhere outside the hero banner */
+  :root:not(.dark) h1:not(.hero-banner *),
+  :root:not(.dark) h2:not(.hero-banner *),
+  :root:not(.dark) h3:not(.hero-banner *),
+  :root:not(.dark) h4:not(.hero-banner *),
+  :root:not(.dark) h5:not(.hero-banner *),
+  :root:not(.dark) h6:not(.hero-banner *) {
+    color: #111827 !important;
+  }
+
+  /* High-contrast text everywhere outside dark banners and buttons */
+  :root:not(.dark) .text-white:not(button):not(button *):not(a[class*="bg-"]):not(a[class*="bg-"] *):not([class*="bg-primary"]):not([class*="bg-primary"] *):not([class*="bg-purple"]):not([class*="bg-purple"] *):not([class*="bg-emerald"]):not([class*="bg-emerald"] *):not(.hero-banner *):not([style*="linear-gradient"] *):not(.badge *):not(.lf-badge *) {
     color: #111827 !important;
   }
 
   /* High-contrast readable gray scales for light mode */
-  :root:not(.dark) .glass-panel .text-gray-300 { color: #1f2937 !important; }
-  :root:not(.dark) .glass-panel .text-gray-400 { color: #374151 !important; }
-  :root:not(.dark) .glass-panel .text-gray-500 { color: #4b5563 !important; }
+  :root:not(.dark) .text-gray-300:not(.hero-banner *):not(button *) { color: #374151 !important; }
+  :root:not(.dark) .text-gray-400:not(.hero-banner *):not(button *) { color: #4B5563 !important; }
+  :root:not(.dark) .text-gray-500:not(.hero-banner *):not(button *) { color: #6B7280 !important; }
+  :root:not(.dark) .text-gray-600:not(.hero-banner *):not(button *) { color: #4B5563 !important; }
 
-  /* Ensure button text remains crisp white on primary/emerald/colored buttons in light mode */
+  /* Ensure primary purple text has strong contrast on light backgrounds */
+  :root:not(.dark) .text-primary-300:not(button *):not(.hero-banner *) { color: #6D28D9 !important; }
+  :root:not(.dark) .text-primary-400:not(button *):not(.hero-banner *) { color: #7C3AED !important; }
+
+  /* Light mode glass panels and cards */
+  :root:not(.dark) .glass-panel,
+  :root:not(.dark) .lf-card,
+  :root:not(.dark) [class*="bg-dark-card"],
+  :root:not(.dark) [class*="bg-[#0E0C17]"],
+  :root:not(.dark) [class*="bg-[#171326]"],
+  :root:not(.dark) [class*="bg-[#160F29]"],
+  :root:not(.dark) [class*="bg-[#1E1538]"],
+  :root:not(.dark) [class*="bg-[#18122B]"] {
+    background: #FFFFFF !important;
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(109, 40, 217, 0.16) !important;
+    box-shadow: 0 4px 24px rgba(109, 40, 217, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  :root:not(.dark) .lf-card:hover {
+    border-color: rgba(109, 40, 217, 0.35) !important;
+    box-shadow: 0 8px 32px rgba(109, 40, 217, 0.14) !important;
+  }
+
+  /* Form inputs in light mode */
+  :root:not(.dark) input:not([type="checkbox"]):not([type="radio"]),
+  :root:not(.dark) textarea,
+  :root:not(.dark) select,
+  :root:not(.dark) .lf-input {
+    background-color: #FFFFFF !important;
+    border: 1px solid rgba(109, 40, 217, 0.25) !important;
+    color: #111827 !important;
+  }
+
+  :root:not(.dark) input::placeholder,
+  :root:not(.dark) textarea::placeholder {
+    color: #9CA3AF !important;
+  }
+
+  /* Badges in light mode */
+  :root:not(.dark) .lf-badge-purple {
+    background-color: rgba(109, 40, 217, 0.12) !important;
+    color: #6D28D9 !important;
+    border-color: rgba(109, 40, 217, 0.3) !important;
+    font-weight: 600 !important;
+  }
+
+  :root:not(.dark) .lf-badge-green {
+    background-color: rgba(34, 197, 94, 0.14) !important;
+    color: #15803D !important;
+    border-color: rgba(34, 197, 94, 0.35) !important;
+    font-weight: 600 !important;
+  }
+
+  :root:not(.dark) .lf-badge-orange {
+    background-color: rgba(249, 115, 22, 0.14) !important;
+    color: #C2410C !important;
+    border-color: rgba(249, 115, 22, 0.35) !important;
+    font-weight: 600 !important;
+  }
+
+  /* Ensure button text remains crisp white on primary/purple/emerald buttons in light mode */
   :root:not(.dark) button.text-white,
   :root:not(.dark) a.text-white,
   :root:not(.dark) button.text-white span,
@@ -117,14 +183,8 @@
   /* Light mode page background */
   :root:not(.dark) .min-h-screen.bg-dark-bg,
   :root:not(.dark) [style*="--page-bg"] {
-    background-color: #f8f7ff !important;
+    background-color: #FAF9FF !important;
   }
-
-  /* Light mode text corrections at page level */
-  :root:not(.dark) .text-gray-300 { color: #1f2937; }
-  :root:not(.dark) .text-gray-400 { color: #374151; }
-  :root:not(.dark) .text-gray-500 { color: #4b5563; }
-  :root:not(.dark) .text-gray-600 { color: #4b5563; }
 
   .glass-panel-light {
     @apply relative overflow-hidden;

@@ -69,10 +69,31 @@ export async function launchGoogleOAuthPopup(
   }
 
   try {
+    let hasResolved = false
+
+    // Safety timeout: if popup is closed or blocked by browser, abort after 15s
+    const timer = setTimeout(() => {
+      if (!hasResolved) {
+        hasResolved = true
+        onError('Google popup was closed or timed out. Please choose or enter your Google email directly.')
+      }
+    }, 15000)
+
     const client = g.accounts.oauth2.initTokenClient({
       client_id: clientId,
       scope: 'email profile openid',
+      error_callback: (err: any) => {
+        if (!hasResolved) {
+          hasResolved = true
+          clearTimeout(timer)
+          onError(err?.message || 'Google OAuth request was cancelled or blocked.')
+        }
+      },
       callback: async (response: any) => {
+        if (hasResolved) return
+        hasResolved = true
+        clearTimeout(timer)
+
         if (response.error) {
           onError(response.error_description || response.error || 'Google sign-in was cancelled or encountered an error.')
           return
