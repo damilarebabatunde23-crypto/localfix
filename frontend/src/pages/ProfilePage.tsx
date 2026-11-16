@@ -79,12 +79,12 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [customLanguageInput, setCustomLanguageInput] = useState('')
   const [profileData, setProfileData] = useState({
-    firstName: user?.firstName || 'Babatunde',
-    lastName: user?.lastName || 'Ogundimu',
-    email: user?.email || 'babatunde.o@gmail.com',
-    phone: user?.phone || '+234 803 491 8820',
-    locationName: user?.locationName || 'Ikeja GRA, Lagos',
-    avatar: user?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&h=160&fit=crop&crop=face',
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    locationName: user?.locationName || locationName || 'Ikeja GRA, Lagos',
+    avatar: user?.avatar || '',
     tier: user?.tier || (user?.role === 'worker' ? 'Vetted Pro Artisan' : 'Tier 3 Gold Resident'),
     languages: user?.languages && user.languages.length > 0 ? user.languages : ['English', 'Nigerian Pidgin'],
   })
@@ -93,14 +93,48 @@ export default function ProfilePage() {
   const [notifications, setNotifications] = useState<any[]>([])
   const [notificationFilter, setNotificationFilter] = useState<'all' | 'escrow' | 'job' | 'system'>('all')
 
+  // Fetch fresh profile from backend on mount
+  useEffect(() => {
+    authApi.getProfile().then((p) => {
+      if (p) {
+        setUser({
+          id: p.id,
+          email: p.email,
+          firstName: p.first_name,
+          lastName: p.last_name,
+          phone: p.phone,
+          locationName: p.location_name,
+          avatar: p.avatar || p.avatar_url,
+          role: p.role,
+          tier: p.tier,
+          languages: p.languages,
+          isVerified: p.is_verified,
+          isEmailVerified: true,
+          createdAt: p.created_at,
+          updatedAt: p.updated_at,
+        })
+        setProfileData({
+          firstName: p.first_name || '',
+          lastName: p.last_name || '',
+          email: p.email || '',
+          phone: p.phone || '',
+          locationName: p.location_name || '',
+          avatar: p.avatar || p.avatar_url || '',
+          tier: p.tier || (p.role === 'worker' ? 'Vetted Pro Artisan' : 'Tier 3 Gold Resident'),
+          languages: Array.isArray(p.languages) && p.languages.length > 0 ? p.languages : ['English', 'Nigerian Pidgin'],
+        })
+      }
+    }).catch(() => {})
+  }, [])
+
   // Sync if store user changes
   useEffect(() => {
     if (user) {
       setProfileData((prev) => ({
         ...prev,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
+        firstName: user.firstName || prev.firstName,
+        lastName: user.lastName || prev.lastName,
+        email: user.email || prev.email,
         phone: user.phone || prev.phone,
         locationName: user.locationName || prev.locationName,
         avatar: user.avatar || prev.avatar,
@@ -159,36 +193,45 @@ export default function ProfilePage() {
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault()
+    toast.loading('Saving profile changes...', { id: 'save-profile' })
     try {
-      await authApi.updateProfile({
+      const updatedUser = await authApi.updateProfile({
         first_name: profileData.firstName,
         last_name: profileData.lastName,
         phone: profileData.phone,
         location_name: profileData.locationName,
         avatar_url: profileData.avatar,
         languages: profileData.languages,
+        tier: profileData.tier,
       })
-    } catch (err) {
-      console.warn('Profile saved in store', err)
+
+      setUser({
+        id: updatedUser.id || user?.id || 'usr-1',
+        email: updatedUser.email || profileData.email,
+        firstName: updatedUser.first_name || profileData.firstName,
+        lastName: updatedUser.last_name || profileData.lastName,
+        phone: updatedUser.phone || profileData.phone,
+        locationName: updatedUser.location_name || profileData.locationName,
+        avatar: updatedUser.avatar || updatedUser.avatar_url || profileData.avatar,
+        role: updatedUser.role || user?.role || 'customer',
+        tier: updatedUser.tier || profileData.tier,
+        languages: updatedUser.languages || profileData.languages,
+        isVerified: true,
+        isEmailVerified: true,
+        createdAt: updatedUser.created_at || user?.createdAt || new Date().toISOString(),
+        updatedAt: updatedUser.updated_at || new Date().toISOString(),
+      })
+
+      setIsEditModalOpen(false)
+      toast.success('Profile and picture updated successfully! 🎉', { id: 'save-profile' })
+    } catch (err: any) {
+      console.error('Profile update error:', err)
+      const errorMsg =
+        err.response?.data?.avatar_url?.[0] ||
+        err.response?.data?.detail ||
+        'Failed to save profile. Please check your network and try again.'
+      toast.error(errorMsg, { id: 'save-profile' })
     }
-    setUser({
-      id: user?.id || 'usr-babatunde-01',
-      email: profileData.email,
-      firstName: profileData.firstName,
-      lastName: profileData.lastName,
-      phone: profileData.phone,
-      locationName: profileData.locationName,
-      avatar: profileData.avatar,
-      role: user?.role || 'customer',
-      tier: profileData.tier,
-      languages: profileData.languages,
-      isVerified: true,
-      isEmailVerified: true,
-      createdAt: user?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    })
-    setIsEditModalOpen(false)
-    toast.success('Profile and spoken languages updated successfully! 🎉')
   }
 
   // Live Backend State
@@ -385,7 +428,7 @@ export default function ProfilePage() {
                 title="Click to edit profile & picture"
               >
                 <img
-                  src={profileData.avatar}
+                  src={profileData.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileData.firstName || 'User')}&backgroundColor=6D28D9`}
                   alt={`${profileData.firstName} ${profileData.lastName}`}
                   className="w-20 h-20 rounded-2xl object-cover border-2 border-primary-500/40 shadow-glow-sm transition-transform group-hover:scale-105"
                 />
@@ -2468,7 +2511,7 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-4 p-3 rounded-2xl bg-white/5 border border-white/10">
                     <div className="relative group flex-shrink-0">
                       <img
-                        src={profileData.avatar}
+                        src={profileData.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileData.firstName || 'User')}&backgroundColor=6D28D9`}
                         alt="Preview"
                         className="w-16 h-16 rounded-2xl object-cover border-2 border-primary-500/50"
                       />

@@ -36,7 +36,7 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='customer')
     
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
-    avatar_url = models.URLField(max_length=500, blank=True, null=True)
+    avatar_url = models.TextField(blank=True, null=True)
     
     location_name = models.CharField(max_length=255, default='Ikeja GRA, Lagos')
     latitude = models.FloatField(default=6.5916)
@@ -70,10 +70,10 @@ class User(AbstractUser):
 
     @property
     def resolved_avatar(self):
-        if self.avatar:
-            return self.avatar.url
         if self.avatar_url:
             return self.avatar_url
+        if self.avatar:
+            return self.avatar.url
         return f"https://api.dicebear.com/7.x/avataaars/svg?seed={self.first_name}&backgroundColor=6D28D9"
 
 class Notification(models.Model):

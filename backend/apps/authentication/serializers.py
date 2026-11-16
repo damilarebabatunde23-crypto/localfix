@@ -195,6 +195,16 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    bio = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    tier = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    phone = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    location_name = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    languages = serializers.JSONField(required=False, default=list)
+
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'phone', 'location_name', 'latitude', 'longitude', 'bio', 'tier', 'avatar', 'avatar_url', 'languages']
+        fields = [
+            'first_name', 'last_name', 'phone', 'location_name',
+            'latitude', 'longitude', 'bio', 'tier', 'avatar_url', 'languages'
+        ]

@@ -114,8 +114,9 @@ export const authApi = {
     bio: string
     avatar_url: string
     languages: string[]
+    tier: string
   }>) => {
-    const res = await api.put('/auth/profile/', data)
+    const res = await api.patch('/auth/profile/', data)
     return res.data
   },
   getUser: async (id: string) => {

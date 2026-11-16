@@ -59,25 +59,30 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
     def perform_update(self, serializer):
         user = serializer.save()
-        if hasattr(user, 'worker_profile'):
+        if hasattr(user, 'worker_profile') and user.worker_profile:
             wp = user.worker_profile
             updated = False
-            if 'latitude' in serializer.validated_data:
+            if 'latitude' in serializer.validated_data and user.latitude:
                 wp.latitude = user.latitude
                 updated = True
-            if 'longitude' in serializer.validated_data:
+            if 'longitude' in serializer.validated_data and user.longitude:
                 wp.longitude = user.longitude
                 updated = True
-            if 'location_name' in serializer.validated_data:
+            if 'location_name' in serializer.validated_data and user.location_name:
                 wp.service_area = user.location_name
+                updated = True
+            if 'bio' in serializer.validated_data and user.bio:
+                wp.bio = user.bio
+                updated = True
+            if 'phone' in serializer.validated_data and user.phone:
+                wp.phone_number = user.phone
                 updated = True
             if updated:
                 wp.save()
 
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(UserSerializer(instance).data)
