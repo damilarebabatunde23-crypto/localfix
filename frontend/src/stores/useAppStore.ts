@@ -263,8 +263,16 @@ export const useAppStore = create<AppState>()(
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
-          // Clean up any corrupt or legacy dummy tokens
-          if (state.accessToken && (!state.accessToken.includes('.') || state.accessToken === 'demo-jwt-token-verified')) {
+          // Clean up any corrupt, dummy or legacy mock sessions
+          const u = state.user as any
+          const isDummyUser = u && (
+            u.name?.toLowerCase().includes('marcus') ||
+            u.name?.toLowerCase().includes('sterling') ||
+            u.firstName?.toLowerCase().includes('marcus') ||
+            u.email?.includes('demo') ||
+            u.email?.includes('example.com')
+          )
+          if (isDummyUser || (state.accessToken && (!state.accessToken.includes('.') || state.accessToken === 'demo-jwt-token-verified'))) {
             state.accessToken = null
             state.isAuthenticated = false
             state.user = null
