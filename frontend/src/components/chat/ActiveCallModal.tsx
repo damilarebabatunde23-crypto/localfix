@@ -14,9 +14,11 @@ import {
   MessageCircle,
   AlertCircle,
   Radio,
+  Columns,
+  RefreshCw,
 } from 'lucide-react'
 import { useChatStore, playChatSound } from '@/stores/useChatStore'
-import { chatApi } from '@/lib/api'
+import { chatApi, api } from '@/lib/api'
 import { toast } from 'react-hot-toast'
 
 const ICE_SERVERS: RTCConfiguration = {
@@ -24,7 +26,12 @@ const ICE_SERVERS: RTCConfiguration = {
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
     { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
+    { urls: 'stun:stun.services.mozilla.com' },
+    { urls: 'stun:stun.cloudflare.com:3478' },
   ],
+  iceCandidatePoolSize: 10,
 }
 
 export default function ActiveCallModal() {
@@ -40,6 +47,8 @@ export default function ActiveCallModal() {
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
+  const [layoutMode, setLayoutMode] = useState<'pip' | 'grid'>('pip')
+  const [isSwapped, setIsSwapped] = useState<boolean>(false)
   const [micLevel, setMicLevel] = useState<number>(0)
   const [hasMediaAccess, setHasMediaAccess] = useState<boolean | null>(null)
   const [mediaNotice, setMediaNotice] = useState<string | null>(null)
@@ -54,6 +63,9 @@ export default function ActiveCallModal() {
   const analyserRef = useRef<AnalyserNode | null>(null)
   const animFrameRef = useRef<number | null>(null)
   const currentCallIdRef = useRef<string | null>(activeCall?.callId || null)
+  const pendingIceCandidates = useRef<any[]>([])
+  const appliedCandidates = useRef<Set<string>>(new Set())
+  const remoteStreamRef = useRef<MediaStream | null>(null)
 
   // Keep currentCallIdRef updated
   useEffect(() => {
@@ -87,8 +99,31 @@ export default function ActiveCallModal() {
     }
   }, [activeCall?.status, activeCall?.duration])
 
+  // Ensure remote stream is bound to the remote video element whenever stream or layout updates
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      remoteVideoRef.current.srcObject = remoteStream
+      remoteVideoRef.current.play().catch(() => {})
+    }
+  }, [remoteStream, layoutMode, isSwapped])
+
+  // Ensure local stream is bound to the self video element
+  useEffect(() => {
+    if (selfVideoRef.current && localStream) {
+      selfVideoRef.current.srcObject = localStream
+      selfVideoRef.current.play().catch(() => {})
+    }
+  }, [localStream, activeCall?.isCameraOff, layoutMode, isSwapped])
+
+  // Speaker control
+  useEffect(() => {
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.muted = !activeCall?.isSpeakerOn
+    }
+  }, [activeCall?.isSpeakerOn])
+
   // ========================================================
-  // WEBRTC CORE ENGINE: PEER CONNECTION & SIGNALING
+  // WEBRTC CORE ENGINE: BILATERAL STREAMING & ROBUST SIGNALING
   // ========================================================
   useEffect(() => {
     const callData = activeCall
@@ -98,6 +133,31 @@ export default function ActiveCallModal() {
     const isVideo = callData.type === 'video'
     let pc: RTCPeerConnection | null = null
     let stream: MediaStream | null = null
+
+    // Reset session refs
+    appliedCandidates.current.clear()
+    pendingIceCandidates.current = []
+    if (callData.callId) {
+      currentCallIdRef.current = callData.callId
+    }
+
+    // Helper to flush queued candidates to backend
+    const flushPendingCandidates = async (targetCallId: string) => {
+      currentCallIdRef.current = targetCallId
+      if (pendingIceCandidates.current.length > 0) {
+        const candidates = [...pendingIceCandidates.current]
+        pendingIceCandidates.current = []
+        try {
+          await api.post(`/chat/calls/${targetCallId}/ice-candidate/`, { candidates })
+        } catch {
+          for (const cand of candidates) {
+            try {
+              await chatApi.sendIceCandidate(targetCallId, cand)
+            } catch {}
+          }
+        }
+      }
+    }
 
     async function initWebRTC(call: NonNullable<typeof activeCall>) {
       try {
@@ -115,7 +175,13 @@ export default function ActiveCallModal() {
 
         stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
-          video: isVideo ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' } : false,
+          video: isVideo
+            ? {
+                width: { ideal: 1280, min: 640 },
+                height: { ideal: 720, min: 480 },
+                facingMode: 'user',
+              }
+            : false,
         })
 
         if (!isMounted) {
@@ -154,49 +220,59 @@ export default function ActiveCallModal() {
             updateLevel()
           }
         } catch {
-          // AudioCtx blocked by browser policy
+          // AudioCtx policy
         }
 
-        // Attach local stream to self video element
+        // Attach local stream to self video element immediately
         if (selfVideoRef.current && isVideo) {
           selfVideoRef.current.srcObject = stream
           selfVideoRef.current.play().catch(() => {})
         }
 
-        // 2. Initialize RTCPeerConnection
+        // 2. Initialize RTCPeerConnection with STUN servers
         pc = new RTCPeerConnection(ICE_SERVERS)
         pcRef.current = pc
 
-        // Add local tracks to RTCPeerConnection
+        // Add local tracks to RTCPeerConnection so peer receives our audio/video
         stream.getTracks().forEach((track) => {
           if (pc && stream) {
             pc.addTrack(track, stream)
           }
         })
 
-        // Listen for incoming remote tracks from the other user
+        // Listen for incoming remote tracks from the peer (Client receives Worker; Worker receives Client)
         pc.ontrack = (event) => {
+          let inbound: MediaStream
           if (event.streams && event.streams[0]) {
-            setRemoteStream(event.streams[0])
-            if (remoteVideoRef.current) {
-              remoteVideoRef.current.srcObject = event.streams[0]
-              remoteVideoRef.current.play().catch(() => {})
-            }
-            setCallStatusText('Connected')
-            useChatStore.setState((s) => ({
-              activeCall: s.activeCall ? { ...s.activeCall, status: 'connected' } : null,
-            }))
+            inbound = event.streams[0]
+          } else {
+            inbound = remoteStreamRef.current || new MediaStream()
+            inbound.addTrack(event.track)
           }
+          remoteStreamRef.current = inbound
+          setRemoteStream(inbound)
+
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = inbound
+            remoteVideoRef.current.play().catch(() => {})
+          }
+          setCallStatusText('Connected · Live Streaming')
+          useChatStore.setState((s) => ({
+            activeCall: s.activeCall ? { ...s.activeCall, status: 'connected' } : null,
+          }))
         }
 
-        // Listen for local ICE candidates generated and send them to backend
+        // Listen for local ICE candidates generated and send or queue them
         pc.onicecandidate = async (event) => {
-          if (event.candidate && currentCallIdRef.current) {
+          if (!event.candidate) return
+          const candJson = event.candidate.toJSON()
+          const activeId = currentCallIdRef.current
+          if (activeId) {
             try {
-              await chatApi.sendIceCandidate(currentCallIdRef.current, event.candidate.toJSON())
-            } catch {
-              // Ignore network drops
-            }
+              await chatApi.sendIceCandidate(activeId, candJson)
+            } catch {}
+          } else {
+            pendingIceCandidates.current.push(candJson)
           }
         }
 
@@ -204,34 +280,37 @@ export default function ActiveCallModal() {
         pc.onconnectionstatechange = () => {
           if (!pc) return
           if (pc.connectionState === 'connected') {
-            setCallStatusText('Connected · Encrypted')
+            setCallStatusText('Connected · Live Streaming')
             playChatSound('connect')
             useChatStore.setState((s) => ({
               activeCall: s.activeCall ? { ...s.activeCall, status: 'connected' } : null,
             }))
           } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-            setCallStatusText('Reconnecting...')
+            setCallStatusText('Reconnecting video link...')
           } else if (pc.connectionState === 'closed') {
             setCallStatusText('Call Ended')
           }
         }
 
-        // 3. Signaling Flow:
+        // 3. Signaling Negotiation:
         if (call.isIncoming && call.callId && call.offer) {
           // --- RECIPIENT FLOW: ANSWER CALL ---
+          currentCallIdRef.current = call.callId
           setCallStatusText('Connecting to caller...')
+
           await pc.setRemoteDescription(new RTCSessionDescription(call.offer))
           const answer = await pc.createAnswer()
           await pc.setLocalDescription(answer)
 
           await chatApi.answerCallSession(call.callId, answer)
-          currentCallIdRef.current = call.callId
+          await flushPendingCandidates(call.callId)
 
           // Poll for caller ICE candidates or call state changes
           pollIntervalRef.current = setInterval(async () => {
-            if (!currentCallIdRef.current || !pc) return
+            const activeId = currentCallIdRef.current
+            if (!activeId || !pc) return
             try {
-              const detail = await chatApi.getCallDetail(currentCallIdRef.current)
+              const detail = await chatApi.getCallDetail(activeId)
               if (detail.status === 'ended' || detail.status === 'rejected') {
                 toast('Call ended by peer')
                 endCall()
@@ -239,13 +318,17 @@ export default function ActiveCallModal() {
               }
               if (Array.isArray(detail.caller_candidates) && pc.remoteDescription) {
                 for (const cand of detail.caller_candidates) {
-                  try {
-                    await pc.addIceCandidate(new RTCIceCandidate(cand))
-                  } catch {}
+                  const key = (cand && (cand.candidate || JSON.stringify(cand))) || ''
+                  if (key && !appliedCandidates.current.has(key)) {
+                    appliedCandidates.current.add(key)
+                    try {
+                      await pc.addIceCandidate(new RTCIceCandidate(cand))
+                    } catch {}
+                  }
                 }
               }
             } catch {}
-          }, 1500)
+          }, 1000)
         } else {
           // --- CALLER FLOW: INITIATE OUTGOING CALL ---
           setCallStatusText('Calling artisan...')
@@ -267,37 +350,46 @@ export default function ActiveCallModal() {
                 useChatStore.setState((s) => ({
                   activeCall: s.activeCall ? { ...s.activeCall, callId: res.id } : null,
                 }))
+                await flushPendingCandidates(res.id)
               }
             } catch {
-              // Solo test or offline mode
+              // Offline fallback
             }
+          } else if (backendCallId) {
+            currentCallIdRef.current = backendCallId
+            await flushPendingCandidates(backendCallId)
           }
 
           let elapsedRingingSeconds = 0
           pollIntervalRef.current = setInterval(async () => {
-            elapsedRingingSeconds += 1.5
+            elapsedRingingSeconds += 1.0
 
-            if (!currentCallIdRef.current || !pc) return
+            const activeId = currentCallIdRef.current
+            if (!activeId || !pc) return
             try {
-              const detail = await chatApi.getCallDetail(currentCallIdRef.current)
+              const detail = await chatApi.getCallDetail(activeId)
               if (detail.status === 'accepted' && detail.answer) {
                 if (!pc.currentRemoteDescription) {
                   await pc.setRemoteDescription(new RTCSessionDescription(detail.answer))
-                  setCallStatusText('Connected')
+                  setCallStatusText('Connected · Live Streaming')
                   playChatSound('connect')
                   useChatStore.setState((s) => ({
                     activeCall: s.activeCall ? { ...s.activeCall, status: 'connected' } : null,
                   }))
                 }
-                if (Array.isArray(detail.recipient_candidates)) {
+                if (Array.isArray(detail.recipient_candidates) && pc.remoteDescription) {
                   for (const cand of detail.recipient_candidates) {
-                    try {
-                      await pc.addIceCandidate(new RTCIceCandidate(cand))
-                    } catch {}
+                    const key = (cand && (cand.candidate || JSON.stringify(cand))) || ''
+                    if (key && !appliedCandidates.current.has(key)) {
+                      appliedCandidates.current.add(key)
+                      try {
+                        await pc.addIceCandidate(new RTCIceCandidate(cand))
+                      } catch {}
+                    }
                   }
                 }
               } else if (detail.status === 'rejected') {
-                toast.error('Artisan declined the call.')
+                toast.error('Call declined.')
                 endCall()
               } else if (detail.status === 'ended') {
                 toast('Call ended.')
@@ -305,12 +397,12 @@ export default function ActiveCallModal() {
               }
             } catch {}
 
-            // Ringing timeout after 40 seconds
-            if (elapsedRingingSeconds >= 40 && useChatStore.getState().activeCall?.status === 'ringing') {
-              toast('No answer from artisan. Please leave an in-app message or reach out via WhatsApp.')
+            // Ringing timeout after 45 seconds
+            if (elapsedRingingSeconds >= 45 && useChatStore.getState().activeCall?.status === 'ringing') {
+              toast('No answer from peer. Please leave a message in chat.')
               endCall()
             }
-          }, 1500)
+          }, 1000)
         }
       } catch (err: any) {
         console.warn('WebRTC initialization notice:', err)
@@ -424,7 +516,7 @@ export default function ActiveCallModal() {
   }
 
   // ========================================================
-  // 2. FULL IMMERSIVE CALL INTERFACE (MOBILE FULLSCREEN & DESKTOP MODAL)
+  // 2. FULL IMMERSIVE CALL INTERFACE (TWO-WAY BILATERAL VIEW)
   // ========================================================
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4 bg-black/85 backdrop-blur-md select-none">
@@ -433,7 +525,7 @@ export default function ActiveCallModal() {
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.92, opacity: 0, y: 30 }}
         className={`relative w-full h-[100dvh] sm:h-auto ${
-          isVideo ? 'sm:max-w-3xl sm:h-[600px]' : 'sm:max-w-md sm:h-[520px]'
+          isVideo ? 'sm:max-w-4xl sm:h-[640px]' : 'sm:max-w-md sm:h-[520px]'
         } rounded-none sm:rounded-3xl overflow-hidden flex flex-col shadow-2xl`}
         style={{
           background: 'linear-gradient(180deg, #18132b 0%, #0d0a18 100%)',
@@ -442,17 +534,17 @@ export default function ActiveCallModal() {
         }}
       >
         {/* Top Header */}
-        <div className="p-3.5 sm:p-4 flex items-center justify-between z-30 bg-gradient-to-b from-black/80 via-black/40 to-transparent">
+        <div className="p-3.5 sm:p-4 flex items-center justify-between z-30 bg-gradient-to-b from-black/85 via-black/50 to-transparent">
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-xl bg-primary-700/40 border border-primary-500/30 text-primary-300">
               {isVideo ? <Video className="w-4 h-4" /> : <Phone className="w-4 h-4" />}
             </span>
             <div>
               <div className="text-xs sm:text-sm font-bold text-white flex items-center gap-1">
-                <span>LocalFix Live {isVideo ? 'Video Call' : 'Voice Call'}</span>
+                <span>LocalFix Live {isVideo ? 'Two-Way Video' : 'Voice Call'}</span>
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               </div>
-              <div className="text-[10px] text-gray-400 flex items-center gap-1.5">
+              <div className="text-[10px] text-gray-300 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 <span>{callStatusText}</span>
               </div>
@@ -460,6 +552,28 @@ export default function ActiveCallModal() {
           </div>
 
           <div className="flex items-center gap-2">
+            {isVideo && (
+              <>
+                {/* Split / PIP Layout Toggle */}
+                <button
+                  onClick={() => setLayoutMode(layoutMode === 'pip' ? 'grid' : 'pip')}
+                  className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-gray-200 hover:text-white transition-colors text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                  title="Toggle Split / Picture-in-Picture view"
+                >
+                  <Columns className="w-3.5 h-3.5 text-primary-300" />
+                  <span className="hidden sm:inline">{layoutMode === 'pip' ? 'Split View' : 'PIP View'}</span>
+                </button>
+                {/* Swap Main Feeds */}
+                <button
+                  onClick={() => setIsSwapped(!isSwapped)}
+                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-gray-200 hover:text-white transition-colors cursor-pointer"
+                  title="Swap Main and Thumbnail Camera feeds"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-primary-300" />
+                </button>
+              </>
+            )}
+
             <a
               href={whatsappUrl}
               target="_blank"
@@ -472,7 +586,7 @@ export default function ActiveCallModal() {
             </a>
             <button
               onClick={toggleCallMinimize}
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white transition-colors"
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white transition-colors cursor-pointer"
               title="Minimize to Picture-in-Picture"
             >
               <Minimize2 className="w-4 h-4" />
@@ -489,86 +603,150 @@ export default function ActiveCallModal() {
         )}
 
         {/* ======================================================== */}
-        {/* CENTER STAGE: REAL REMOTE STREAM CANVAS                  */}
+        {/* CENTER STAGE: BILATERAL TWO-WAY VIDEO CANVAS             */}
         {/* ======================================================== */}
-        <div className="flex-1 relative flex items-center justify-center overflow-hidden bg-gray-950">
+        <div className="flex-1 relative flex items-center justify-center overflow-hidden bg-black">
           {isVideo ? (
-            /* --- LIVE VIDEO CALL VIEW --- */
-            <div className="w-full h-full relative flex items-center justify-center">
-              {/* Remote Real Video Stream */}
-              <video
-                ref={remoteVideoRef}
-                autoPlay
-                playsInline
-                className={`w-full h-full object-cover transition-opacity duration-500 ${
-                  remoteStream ? 'opacity-100' : 'opacity-0'
-                }`}
-              />
-
-              {/* Waiting / Connecting Placeholder if Remote Video Stream is not yet received */}
-              {!remoteStream && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-[#130f24]">
-                  <div className="relative mb-4">
-                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-2 border-primary-500/50 shadow-2xl">
-                      <img
-                        src={
-                          activeCall.contact.avatar ||
-                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
-                            activeCall.contact.name
-                          )}&backgroundColor=6D28D9`
-                        }
-                        alt={activeCall.contact.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    {isRinging && (
-                      <span className="absolute -inset-3 rounded-full border border-primary-400/40 animate-ping" />
-                    )}
-                  </div>
-                  <h4 className="text-lg font-bold text-white mb-1">{activeCall.contact.name}</h4>
-                  <p className="text-xs text-primary-300 font-medium">
-                    {isRinging ? 'Ringing artisan...' : 'Connecting live WebRTC stream...'}
-                  </p>
-                </div>
-              )}
-
-              {/* Remote Contact Tag */}
-              <div className="absolute bottom-24 sm:bottom-20 left-4 z-20 flex items-center gap-2 bg-black/75 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs font-bold text-white">{activeCall.contact.name}</span>
-                <span className="text-[10px] text-primary-300 hidden sm:inline">
-                  ({activeCall.contact.role || 'Artisan'})
-                </span>
-              </div>
-
-              {/* Local Self Camera Feed in Picture-in-Picture */}
-              <div
-                className="absolute top-4 right-4 w-28 h-36 sm:w-36 sm:h-48 rounded-2xl overflow-hidden border-2 border-primary-400/80 shadow-2xl bg-black z-20"
-                style={{ backdropFilter: 'blur(10px)' }}
-              >
-                {!activeCall.isCameraOff && hasMediaAccess !== false ? (
+            layoutMode === 'grid' ? (
+              /* --- SPLIT / GRID VIEW (50% Client / 50% Worker) --- */
+              <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 gap-2 p-2 bg-[#0c0915]">
+                {/* 1. Remote Feed (Worker or Client) */}
+                <div className="relative w-full h-full rounded-2xl overflow-hidden bg-gray-950 border border-white/10 flex items-center justify-center">
                   <video
-                    ref={selfVideoRef}
+                    ref={remoteVideoRef}
                     autoPlay
                     playsInline
-                    muted
-                    className="w-full h-full object-cover [transform:rotateY(180deg)]"
+                    className={`w-full h-full object-cover transition-opacity duration-300 ${
+                      remoteStream ? 'opacity-100' : 'opacity-0'
+                    }`}
                   />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900 text-gray-400 text-[10px] gap-1 p-2 text-center">
-                    <VideoOff className="w-5 h-5 text-gray-500" />
-                    <span>Camera Off</span>
+                  {!remoteStream && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-[#130f24]">
+                      <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-primary-500/50 mb-3 shadow-xl">
+                        <img
+                          src={
+                            activeCall.contact.avatar ||
+                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(activeCall.contact.name)}&backgroundColor=6D28D9`
+                          }
+                          alt={activeCall.contact.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <h4 className="text-sm font-bold text-white mb-0.5">{activeCall.contact.name}</h4>
+                      <p className="text-[11px] text-primary-300">
+                        {isRinging ? 'Ringing...' : 'Connecting live stream...'}
+                      </p>
+                    </div>
+                  )}
+                  <div className="absolute bottom-2.5 left-2.5 z-20 flex items-center gap-1.5 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-xs font-bold text-white">{activeCall.contact.name}</span>
+                    <span className="text-[10px] text-primary-300">({activeCall.contact.role || 'Peer'})</span>
                   </div>
-                )}
-                <div className="absolute bottom-1 right-1.5 bg-black/80 px-1.5 py-0.5 rounded text-[9px] text-white">
-                  You
+                </div>
+
+                {/* 2. Self Feed (Local Camera) */}
+                <div className="relative w-full h-full rounded-2xl overflow-hidden bg-gray-950 border border-primary-500/30 flex items-center justify-center">
+                  {!activeCall.isCameraOff && hasMediaAccess !== false ? (
+                    <video
+                      ref={selfVideoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover [transform:rotateY(180deg)]"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900 text-gray-400 text-xs gap-1.5">
+                      <VideoOff className="w-6 h-6 text-gray-500" />
+                      <span>Your camera is turned off</span>
+                    </div>
+                  )}
+                  <div className="absolute bottom-2.5 left-2.5 z-20 flex items-center gap-1.5 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    <span className="text-xs font-bold text-white">You (Self Camera)</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              /* --- PICTURE-IN-PICTURE (PIP) VIEW --- */
+              <div className="w-full h-full relative flex items-center justify-center bg-black">
+                {/* Main Fullscreen Video */}
+                <video
+                  ref={isSwapped ? selfVideoRef : remoteVideoRef}
+                  autoPlay
+                  playsInline
+                  muted={isSwapped}
+                  className={`w-full h-full object-cover transition-opacity duration-300 ${
+                    !isSwapped && !remoteStream ? 'opacity-0' : 'opacity-100'
+                  } ${isSwapped ? '[transform:rotateY(180deg)]' : ''}`}
+                />
+
+                {/* Placeholder when remote stream is loading in main view */}
+                {!isSwapped && !remoteStream && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-[#130f24]">
+                    <div className="relative mb-4">
+                      <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-2 border-primary-500/50 shadow-2xl">
+                        <img
+                          src={
+                            activeCall.contact.avatar ||
+                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+                              activeCall.contact.name
+                            )}&backgroundColor=6D28D9`
+                          }
+                          alt={activeCall.contact.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      {isRinging && (
+                        <span className="absolute -inset-3 rounded-full border border-primary-400/40 animate-ping" />
+                      )}
+                    </div>
+                    <h4 className="text-lg font-bold text-white mb-1">{activeCall.contact.name}</h4>
+                    <p className="text-xs text-primary-300 font-medium">
+                      {isRinging ? 'Ringing artisan...' : 'Connecting live WebRTC stream...'}
+                    </p>
+                  </div>
+                )}
+
+                {/* Main View Identifier Badge */}
+                <div className="absolute bottom-24 sm:bottom-20 left-4 z-20 flex items-center gap-2 bg-black/75 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-xs font-bold text-white">
+                    {isSwapped ? 'You (Self Feed)' : activeCall.contact.name}
+                  </span>
+                  {!isSwapped && (
+                    <span className="text-[10px] text-primary-300 hidden sm:inline">
+                      ({activeCall.contact.role || 'Artisan'})
+                    </span>
+                  )}
+                </div>
+
+                {/* Corner Picture-in-Picture Feed (Click to Swap Feeds!) */}
+                <div
+                  onClick={() => setIsSwapped(!isSwapped)}
+                  className="absolute top-4 right-4 w-28 h-36 sm:w-36 sm:h-48 rounded-2xl overflow-hidden border-2 border-primary-400/80 shadow-2xl bg-black z-20 cursor-pointer group"
+                  title="Click to swap main and thumbnail view"
+                  style={{ backdropFilter: 'blur(10px)' }}
+                >
+                  <video
+                    ref={isSwapped ? remoteVideoRef : selfVideoRef}
+                    autoPlay
+                    playsInline
+                    muted={!isSwapped}
+                    className={`w-full h-full object-cover ${!isSwapped ? '[transform:rotateY(180deg)]' : ''}`}
+                  />
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
+                    <RefreshCw className="w-4 h-4" />
+                  </div>
+                  <div className="absolute bottom-1 right-1.5 bg-black/80 px-1.5 py-0.5 rounded text-[9px] text-white">
+                    {isSwapped ? activeCall.contact.name.split(' ')[0] : 'You'}
+                  </div>
+                </div>
+              </div>
+            )
           ) : (
             /* --- LIVE VOICE / AUDIO CALL VIEW --- */
             <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center relative">
-              {/* Hidden audio element for remote stream */}
               <video ref={remoteVideoRef} autoPlay playsInline className="hidden" />
 
               <div className="relative mb-6">
@@ -627,15 +805,15 @@ export default function ActiveCallModal() {
         {/* BOTTOM ACTION TOOLBAR: LARGE, RESPONSIVE, TOUCH-FRIENDLY */}
         {/* ======================================================== */}
         <div className="p-4 sm:p-5 pb-8 sm:pb-5 bg-gradient-to-t from-black via-black/90 to-transparent z-30 flex items-center justify-center gap-3 sm:gap-5 flex-shrink-0">
-          {/* Mute Toggle */}
+          {/* Mute Mic */}
           <button
             onClick={toggleCallMute}
-            className={`p-3.5 sm:p-4 rounded-full border transition-all ${
+            className={`p-3.5 sm:p-4 rounded-full border transition-all cursor-pointer ${
               activeCall.isMuted
                 ? 'bg-amber-600 border-amber-500 text-white'
                 : 'bg-white/10 hover:bg-white/20 border-white/20 text-gray-200 hover:text-white'
             }`}
-            title={activeCall.isMuted ? 'Unmute' : 'Mute'}
+            title={activeCall.isMuted ? 'Unmute Microphone' : 'Mute Microphone'}
           >
             {activeCall.isMuted ? <MicOff className="w-5 h-5 sm:w-6 sm:h-6" /> : <Mic className="w-5 h-5 sm:w-6 sm:h-6" />}
           </button>
@@ -644,7 +822,7 @@ export default function ActiveCallModal() {
           {isVideo && (
             <button
               onClick={toggleCallCamera}
-              className={`p-3.5 sm:p-4 rounded-full border transition-all ${
+              className={`p-3.5 sm:p-4 rounded-full border transition-all cursor-pointer ${
                 activeCall.isCameraOff
                   ? 'bg-amber-600 border-amber-500 text-white'
                   : 'bg-white/10 hover:bg-white/20 border-white/20 text-gray-200 hover:text-white'
@@ -662,12 +840,12 @@ export default function ActiveCallModal() {
           {/* Speaker Toggle */}
           <button
             onClick={toggleCallSpeaker}
-            className={`p-3.5 sm:p-4 rounded-full border transition-all ${
+            className={`p-3.5 sm:p-4 rounded-full border transition-all cursor-pointer ${
               !activeCall.isSpeakerOn
                 ? 'bg-amber-600 border-amber-500 text-white'
                 : 'bg-white/10 hover:bg-white/20 border-white/20 text-gray-200 hover:text-white'
             }`}
-            title={activeCall.isSpeakerOn ? 'Mute Output' : 'Speaker'}
+            title={activeCall.isSpeakerOn ? 'Mute Speaker' : 'Turn On Speaker'}
           >
             {activeCall.isSpeakerOn ? (
               <Volume2 className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -679,7 +857,7 @@ export default function ActiveCallModal() {
           {/* Red End Call Button */}
           <button
             onClick={() => endCall(currentCallIdRef.current || undefined)}
-            className="p-3.5 sm:p-4 px-6 sm:px-8 rounded-full bg-red-600 hover:bg-red-500 text-white font-bold flex items-center gap-2 shadow-2xl shadow-red-900/50 active:scale-95 transition-all"
+            className="p-3.5 sm:p-4 px-6 sm:px-8 rounded-full bg-red-600 hover:bg-red-500 text-white font-bold flex items-center gap-2 shadow-2xl shadow-red-900/50 active:scale-95 transition-all cursor-pointer"
             title="End Call"
           >
             <PhoneOff className="w-5 h-5 sm:w-6 sm:h-6" />

@@ -190,21 +190,28 @@ export const useChatStore = create<ChatStoreState>()(
 
       openChat: async (contact, conversationId) => {
         const current = get().activeContact || LOCALFIX_CONCIERGE_CONTACT
+        const targetId = contact?.id || current.id
+        const isTargetConcierge = targetId === 'localfix-concierge' || targetId === 'localfix-support'
+
         const targetContact: ChatContact = {
-          id: contact?.id || current.id,
-          name: contact?.name || current.name,
-          avatar: contact?.avatar || current.avatar,
-          role: contact?.role || current.role,
+          id: targetId,
+          name: contact?.name || (isTargetConcierge ? 'LocalFix Concierge' : current.name),
+          avatar: contact?.avatar || (isTargetConcierge ? '/logo.jpg' : current.avatar),
+          role: contact?.role || (isTargetConcierge ? 'Official Platform Concierge' : current.role),
           online: contact?.online ?? true,
-          conversationId: conversationId || contact?.conversationId || current.conversationId,
+          conversationId: conversationId || contact?.conversationId || (isTargetConcierge ? 'conv-localfix-concierge' : undefined),
           phone: contact?.phone || current.phone,
         }
+
+        // Real human-to-human chats MUST start with an empty or clean array, never the concierge welcome greeting
+        const initialMsgs = isTargetConcierge ? LOCALFIX_WELCOME_MESSAGES : []
 
         set({
           isOpen: true,
           isMinimized: false,
           activeContact: targetContact,
           activeConversationId: conversationId || targetContact.conversationId || null,
+          messages: initialMsgs,
           unreadTotal: 0,
         })
 
@@ -291,7 +298,14 @@ export const useChatStore = create<ChatStoreState>()(
                 playChatSound('pop')
               }
             }
-            set({ messages: parsed })
+            const activeContact = get().activeContact
+            const isConcierge = activeContact?.id === 'localfix-concierge' || activeContact?.id === 'localfix-support'
+            const sanitized = isConcierge
+              ? parsed
+              : parsed.filter(
+                  (m) => m.id !== 'lf-welcome-1' && !m.text.includes('automated LocalFix Concierge')
+                )
+            set({ messages: sanitized })
           }
         } catch {
           // Keep persistent messages
@@ -656,6 +670,10 @@ export const useChatStore = create<ChatStoreState>()(
             state.messages = LOCALFIX_WELCOME_MESSAGES
             state.isOpen = true
             state.isMinimized = true
+          } else if (contact.id !== 'localfix-concierge' && contact.id !== 'localfix-support') {
+            state.messages = (state.messages || []).filter(
+              (m) => m.id !== 'lf-welcome-1' && !m.text.includes('automated LocalFix Concierge')
+            )
           }
         }
       },

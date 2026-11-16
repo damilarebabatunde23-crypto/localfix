@@ -74,6 +74,11 @@ export default function FacebookChatDock() {
 
   if (!isOpen) return null
 
+  const isConciergeChat = activeContact?.id === 'localfix-concierge' || activeContact?.id === 'localfix-support'
+  const cleanMessages = messages.filter(
+    (m) => isConciergeChat || (m.id !== 'lf-welcome-1' && !m.text.includes('automated LocalFix Concierge'))
+  )
+
   const handleSend = async () => {
     if (!input.trim()) return
     const text = input
@@ -292,7 +297,7 @@ export default function FacebookChatDock() {
                 </span>
               </div>
 
-              {messages.length === 0 ? (
+              {cleanMessages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center text-gray-400">
                   <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-2 shadow-sm">
                     <MessageCircle className="w-5 h-5 text-primary-400" />
@@ -301,9 +306,9 @@ export default function FacebookChatDock() {
                   <span className="text-[10px] text-gray-400 max-w-[200px]">Type below to send a direct message in real time.</span>
                 </div>
               ) : (
-                messages.map((msg, index) => {
+                cleanMessages.map((msg, index) => {
                   const isMe = msg.senderId === 'me'
-                  const isLastFromMe = isMe && (index === messages.length - 1 || messages[index + 1]?.senderId !== 'me')
+                  const isLastFromMe = isMe && (index === cleanMessages.length - 1 || cleanMessages[index + 1]?.senderId !== 'me')
                   const isThumbsUp = msg.mediaType === 'thumbs_up' || msg.text === '👍'
 
                   return (

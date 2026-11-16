@@ -279,19 +279,36 @@ class SendIceCandidateView(APIView):
     def post(self, request, id):
         call = get_object_or_404(CallSession, id=id)
         candidate = request.data.get('candidate')
-        if not candidate:
-            return Response({'error': 'candidate is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        candidates_list = request.data.get('candidates')
+
+        items_to_add = []
+        if candidate:
+            items_to_add.append(candidate)
+        if isinstance(candidates_list, list):
+            items_to_add.extend(candidates_list)
+
+        if not items_to_add:
+            return Response({'error': 'candidate or candidates is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        def add_unique(existing_list, new_items):
+            result = list(existing_list or [])
+            existing_keys = {
+                (c.get('candidate') or str(c)) if isinstance(c, dict) else str(c)
+                for c in result
+            }
+            for item in new_items:
+                key = (item.get('candidate') or str(item)) if isinstance(item, dict) else str(item)
+                if key not in existing_keys:
+                    result.append(item)
+                    existing_keys.add(key)
+            return result
 
         if request.user == call.caller:
-            candidates = list(call.caller_candidates or [])
-            candidates.append(candidate)
-            call.caller_candidates = candidates
-            call.save()
+            call.caller_candidates = add_unique(call.caller_candidates, items_to_add)
+            call.save(update_fields=['caller_candidates'])
         elif request.user == call.recipient:
-            candidates = list(call.recipient_candidates or [])
-            candidates.append(candidate)
-            call.recipient_candidates = candidates
-            call.save()
+            call.recipient_candidates = add_unique(call.recipient_candidates, items_to_add)
+            call.save(update_fields=['recipient_candidates'])
         else:
             return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
 

@@ -86,6 +86,7 @@ export default function ChatPage() {
       servicesApi.getWorkerDetail(workerParam).then((res: any) => {
         if (res) {
           const nw = normalizeWorker(res)
+          useChatStore.setState({ messages: [] })
           const customThread = {
             id: `worker-${nw.id}`,
             user: {
@@ -107,6 +108,7 @@ export default function ChatPage() {
         }
       }).catch(() => {})
     } else if (convParam) {
+      useChatStore.setState({ messages: [] })
       setSelectedThreadId(convParam)
       setMobileView('chat')
     }
@@ -230,6 +232,11 @@ export default function ChatPage() {
       t.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
+  const isConciergeChat = currentCounterpart?.id === 'localfix-concierge' || currentCounterpart?.id === 'localfix-support'
+  const cleanMessages = messages.filter(
+    (m) => isConciergeChat || (m.id !== 'lf-welcome-1' && !m.text.includes('automated LocalFix Concierge'))
+  )
+
   return (
     <div className="flex bg-[#0f0b1a] text-white overflow-hidden h-[calc(100dvh-64px)] w-full">
       {/* ======================================================== */}
@@ -339,7 +346,11 @@ export default function ChatPage() {
                   onClick={() => {
                     setSelectedThreadId(thread.id)
                     setMobileView('chat')
-                    useChatStore.getState().openChat(thread.user, thread.id.startsWith('thread-') ? undefined : thread.id)
+                    useChatStore.setState({ messages: [] })
+                    const convId = thread.id.startsWith('thread-') || thread.id.startsWith('worker-') || thread.id.startsWith('active-')
+                      ? thread.user.conversationId
+                      : thread.id
+                    useChatStore.getState().openChat(thread.user, convId)
                   }}
                   className={`p-3.5 flex items-center gap-3 cursor-pointer transition-colors ${
                     isSelected ? 'bg-primary-600/20 border-l-4 border-primary-500' : 'hover:bg-white/5'
@@ -512,7 +523,7 @@ export default function ChatPage() {
             </span>
           </div>
 
-          {messages.length === 0 ? (
+          {cleanMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center text-gray-400">
               <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 shadow-lg">
                 <MessageCircle className="w-7 h-7 text-primary-400" />
@@ -523,7 +534,7 @@ export default function ChatPage() {
               </p>
             </div>
           ) : (
-            messages.map((msg) => {
+            cleanMessages.map((msg) => {
             const isMe = msg.senderId === 'me'
             const isThumbsUp = msg.mediaType === 'thumbs_up' || msg.text === '👍'
 
