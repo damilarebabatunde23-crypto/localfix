@@ -488,8 +488,8 @@ export default function MarketplacePage() {
                   {/* CTA */}
                   {item.status === 'available' ? (
                     <button
-                      className="w-full py-2.5 rounded-xl text-xs font-semibold text-white flex items-center justify-center gap-1.5 transition-all cursor-pointer hover:opacity-90"
-                      style={{ background: 'linear-gradient(135deg, rgba(37,99,235,0.7), rgba(109,40,217,0.7))', border: '1px solid rgba(167,139,250,0.3)' }}
+                      className="w-full py-2.5 rounded-xl text-xs font-semibold text-white flex items-center justify-center gap-1.5 transition-all cursor-pointer hover:bg-[#6D28D9] bg-[#7C3AED]"
+                      style={{ border: '1px solid rgba(167,139,250,0.3)' }}
                       onClick={(e) => {
                         e.stopPropagation()
                         useChatStore.getState().openChat({

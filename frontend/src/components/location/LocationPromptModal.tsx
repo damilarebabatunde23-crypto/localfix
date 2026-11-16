@@ -148,8 +148,7 @@ export default function LocationPromptModal() {
             <div className="absolute inset-0 rounded-full bg-primary-600/20 animate-ping" />
             <div className="absolute -inset-3 rounded-full bg-primary-500/10 animate-pulse" />
             <div
-              className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg relative z-10"
-              style={{ background: 'linear-gradient(135deg, #6D28D9 0%, #2563EB 100%)' }}
+              className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg relative z-10 bg-[#7C3AED]"
             >
               <Navigation className="w-8 h-8 text-white animate-bounce" />
             </div>
@@ -185,10 +184,9 @@ export default function LocationPromptModal() {
           <button
             onClick={handleTurnOnGPS}
             disabled={loadingGPS}
-            className="w-full py-4 px-5 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2.5 transition-all shadow-xl hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            className="w-full py-4 px-5 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2.5 transition-all shadow-xl hover:scale-[1.02] active:scale-[0.98] cursor-pointer bg-[#7C3AED] hover:bg-[#6D28D9]"
             style={{
-              background: 'linear-gradient(135deg, #2563EB 0%, #6D28D9 100%)',
-              boxShadow: '0 8px 24px rgba(37, 99, 235, 0.35)',
+              boxShadow: '0 8px 24px rgba(124, 58, 237, 0.4)',
             }}
           >
             <Compass className={`w-5 h-5 ${loadingGPS ? 'animate-spin' : ''}`} />

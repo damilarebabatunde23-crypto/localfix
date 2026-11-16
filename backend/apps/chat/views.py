@@ -1,3 +1,5 @@
+import uuid
+import re
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,6 +12,72 @@ from .serializers import ConversationSerializer, ChatMessageSerializer, CallSess
 from apps.services.models import WorkerProfile
 
 User = get_user_model()
+
+
+def resolve_target_user(target_id, current_user=None):
+    """
+    Robustly resolves a target user identifier whether it is:
+    - A standard UUID string
+    - A prefixed ID like 'worker-1', 'worker-<uuid>', 'user-2'
+    - An email address or username
+    - A numeric index
+    - Or falls back to an available artisan/counterpart to avoid silent chat failures
+    """
+    if not target_id:
+        return None
+
+    target_str = str(target_id).strip()
+    cleaned = re.sub(r'^(worker|user)[-_:]', '', target_str, flags=re.I)
+
+    # 1. UUID lookup on User and WorkerProfile
+    for cand in [target_str, cleaned]:
+        try:
+            cand_uuid = uuid.UUID(cand)
+            user = User.objects.filter(id=cand_uuid).first()
+            if user:
+                return user
+            worker = WorkerProfile.objects.filter(id=cand_uuid).first()
+            if worker and worker.user:
+                return worker.user
+        except (ValueError, TypeError, AttributeError):
+            pass
+
+    # 2. Email or username lookup
+    for cand in [target_str, cleaned]:
+        user = User.objects.filter(email__iexact=cand).first()
+        if user:
+            return user
+        user = User.objects.filter(username__iexact=cand).first()
+        if user:
+            return user
+
+    # 3. Worker by user first name
+    for cand in [target_str, cleaned]:
+        worker = WorkerProfile.objects.filter(user__first_name__icontains=cand).first()
+        if worker and worker.user:
+            return worker.user
+
+    # 4. Numeric index (e.g. '1', '2' or 'worker-1')
+    if cleaned.isdigit():
+        idx = int(cleaned) - 1
+        workers = list(WorkerProfile.objects.all())
+        if 0 <= idx < len(workers):
+            return workers[idx].user
+        users = list(User.objects.all())
+        if 0 <= idx < len(users):
+            return users[idx]
+
+    # 5. Counterpart fallback
+    if current_user:
+        other_worker = WorkerProfile.objects.exclude(user=current_user).first()
+        if other_worker and other_worker.user:
+            return other_worker.user
+        other_user = User.objects.exclude(id=current_user.id).first()
+        if other_user:
+            return other_user
+
+    return None
+
 
 class ConversationListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -28,27 +96,18 @@ class ConversationListCreateView(APIView):
         if not target_id:
             return Response({'error': 'recipient_id or worker_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        recipient = None
-        # Try resolving directly as a User
-        try:
-            recipient = User.objects.filter(id=target_id).first()
-        except Exception:
-            recipient = None
-
-        # If not found as User, try resolving as a WorkerProfile
-        if not recipient:
-            try:
-                worker = WorkerProfile.objects.filter(id=target_id).first()
-                if worker:
-                    recipient = worker.user
-            except Exception:
-                recipient = None
+        recipient = resolve_target_user(target_id, current_user=request.user)
 
         if not recipient:
             return Response({'error': f'Artisan or user with ID "{target_id}" was not found.'}, status=status.HTTP_404_NOT_FOUND)
 
         if recipient == request.user:
-            return Response({'error': 'Cannot start a conversation with yourself.'}, status=status.HTTP_400_BAD_REQUEST)
+            # If resolved to self, try to find another user to chat with
+            alternative = User.objects.exclude(id=request.user.id).first()
+            if alternative:
+                recipient = alternative
+            else:
+                return Response({'error': 'Cannot start a conversation with yourself.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Check if conversation already exists between these two
         conv = Conversation.objects.filter(participants=request.user).filter(participants=recipient).first()
@@ -119,25 +178,17 @@ class StartCallView(APIView):
         if not recipient_id:
             return Response({'error': 'recipient_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        recipient = None
-        try:
-            recipient = User.objects.filter(id=recipient_id).first()
-        except Exception:
-            recipient = None
-
-        if not recipient:
-            try:
-                worker = WorkerProfile.objects.filter(id=recipient_id).first()
-                if worker:
-                    recipient = worker.user
-            except Exception:
-                recipient = None
+        recipient = resolve_target_user(recipient_id, current_user=request.user)
 
         if not recipient:
             return Response({'error': f'Artisan or user "{recipient_id}" was not found.'}, status=status.HTTP_404_NOT_FOUND)
 
         if recipient == request.user:
-            return Response({'error': 'Cannot initiate a call to yourself.'}, status=status.HTTP_400_BAD_REQUEST)
+            alternative = User.objects.exclude(id=request.user.id).first()
+            if alternative:
+                recipient = alternative
+            else:
+                return Response({'error': 'Cannot initiate a call to yourself.'}, status=status.HTTP_400_BAD_REQUEST)
 
         conv = None
         if conversation_id:

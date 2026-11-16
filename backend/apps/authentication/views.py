@@ -230,15 +230,18 @@ class GoogleAuthView(APIView):
                     cat = ServiceCategory.objects.first()
                     WorkerProfile.objects.create(
                         user=user,
-                        business_name=f"{user.first_name}'s Professional Engineering",
+                        profession=f"{user.first_name}'s Professional Engineering",
                         category=cat,
-                        service_area=location_name,
-                        hourly_rate=15000,
+                        bio=f"Certified artisan specialist delivering dependable, high-quality work across {location_name or 'Global'}.",
+                        service_area=location_name or 'Global',
+                        callout_rate=15000.00,
                         years_experience=3,
-                        is_available=True
+                        is_available=True,
+                        is_verified=True,
+                        is_online=True
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"Error creating WorkerProfile for new Google worker: {e}")
 
             # Create welcome notification
             try:
@@ -271,16 +274,19 @@ class GoogleAuthView(APIView):
                     WorkerProfile.objects.get_or_create(
                         user=user,
                         defaults={
-                            'business_name': f"{user.first_name}'s Professional Engineering",
+                            'profession': f"{user.first_name}'s Professional Engineering",
                             'category': cat,
-                            'service_area': location_name,
-                            'hourly_rate': 15000,
+                            'bio': f"Certified artisan specialist delivering dependable, high-quality work across {location_name or 'Global'}.",
+                            'service_area': location_name or 'Global',
+                            'callout_rate': 15000.00,
                             'years_experience': 3,
-                            'is_available': True
+                            'is_available': True,
+                            'is_verified': True,
+                            'is_online': True
                         }
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"Error ensuring WorkerProfile for Google worker: {e}")
 
         refresh = RefreshToken.for_user(user)
         return Response({

@@ -124,7 +124,7 @@ export default function FacebookChatDock() {
             onClick={toggleMinimize}
             className="mb-1 sm:mb-4 flex items-center gap-2 sm:gap-3 px-3 py-2 rounded-full cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-2xl"
             style={{
-              background: 'linear-gradient(135deg, rgba(30, 21, 51, 0.98), rgba(46, 27, 85, 0.98))',
+              background: '#1A1230',
               border: '1.5px solid rgba(167, 139, 250, 0.4)',
               boxShadow: '0 10px 28px rgba(109, 40, 217, 0.45)',
             }}
@@ -168,7 +168,7 @@ export default function FacebookChatDock() {
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="w-[calc(100vw-1.5rem)] sm:w-[380px] h-[480px] max-h-[75vh] sm:max-h-[85vh] rounded-2xl sm:rounded-t-2xl sm:rounded-b-none flex flex-col overflow-hidden shadow-2xl"
             style={{
-              background: 'linear-gradient(180deg, #18132b 0%, #120e22 100%)',
+              background: '#160F29',
               border: '1.5px solid rgba(167, 139, 250, 0.25)',
               boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 24px rgba(109, 40, 217, 0.25)',
             }}
@@ -177,7 +177,7 @@ export default function FacebookChatDock() {
             <div
               className="px-3.5 py-2.5 flex items-center justify-between flex-shrink-0 cursor-default"
               style={{
-                background: 'linear-gradient(135deg, rgba(46, 27, 85, 0.95), rgba(30, 21, 51, 0.95))',
+                background: '#1E1538',
                 borderBottom: '1px solid rgba(167, 139, 250, 0.18)',
               }}
             >
@@ -333,7 +333,7 @@ export default function FacebookChatDock() {
                             className="p-1 cursor-pointer select-none"
                             title="Liked"
                           >
-                            <span className="text-4xl filter drop-shadow-[0_4px_10px_rgba(37,99,235,0.6)]">👍</span>
+                            <span className="text-4xl filter drop-shadow-[0_4px_10px_rgba(124,58,237,0.6)]">👍</span>
                           </motion.div>
                         ) : (
                           <div
@@ -344,7 +344,7 @@ export default function FacebookChatDock() {
                             }`}
                             style={{
                               background: isMe
-                                ? 'linear-gradient(135deg, #2563EB 0%, #6D28D9 100%)'
+                                ? '#7C3AED'
                                 : 'rgba(255, 255, 255, 0.08)',
                               border: isMe ? 'none' : '1px solid rgba(255, 255, 255, 0.06)',
                             }}

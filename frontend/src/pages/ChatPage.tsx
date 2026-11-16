@@ -478,7 +478,7 @@ export default function ChatPage() {
         <div
           className="px-4 py-3 flex items-center justify-between flex-shrink-0"
           style={{
-            background: 'linear-gradient(135deg, rgba(30, 21, 51, 0.95), rgba(23, 16, 38, 0.95))',
+            background: '#160F29',
             borderBottom: '1px solid rgba(167, 139, 250, 0.15)',
           }}
         >
@@ -629,7 +629,7 @@ export default function ChatPage() {
                         className="p-1 select-none cursor-pointer"
                         title="Liked"
                       >
-                        <span className="text-5xl filter drop-shadow-[0_4px_14px_rgba(37,99,235,0.7)]">👍</span>
+                        <span className="text-5xl filter drop-shadow-[0_4px_14px_rgba(124,58,237,0.7)]">👍</span>
                       </motion.div>
                     ) : (
                       <div
@@ -640,7 +640,7 @@ export default function ChatPage() {
                         }`}
                         style={{
                           background: isMe
-                            ? 'linear-gradient(135deg, #2563EB 0%, #6D28D9 100%)'
+                            ? '#7C3AED'
                             : 'rgba(255, 255, 255, 0.08)',
                           border: isMe ? 'none' : '1px solid rgba(255, 255, 255, 0.07)',
                         }}
