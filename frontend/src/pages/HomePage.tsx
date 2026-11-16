@@ -8,7 +8,7 @@ import {
   Navigation, Radio
 } from 'lucide-react'
 import {
-  SERVICE_CATEGORIES, MOCK_WORKERS, formatCurrency, formatDistance, calculateDistanceKm, normalizeWorker
+  SERVICE_CATEGORIES, formatCurrency, formatDistance, calculateDistanceKm, normalizeWorker
 } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/useAppStore'

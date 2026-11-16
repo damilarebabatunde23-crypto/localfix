@@ -5,7 +5,7 @@ import {
   MapPin, Star, CheckCircle, Clock, MessageSquare, Calendar,
   ChevronLeft, Share2, Heart, Briefcase, Shield, Play,
   ZoomIn, X, ShieldCheck, Award, Check, Phone, Video, FileText,
-  BadgeCheck, Sparkles, Building, Info, Radio, Navigation
+  BadgeCheck, Sparkles, Building, Info, Radio, Navigation, Wrench
 } from 'lucide-react'
 import { MOCK_WORKERS, formatCurrency, formatDistance, calculateDistanceKm, normalizeWorker } from '@/lib/utils'
 import { servicesApi, chatApi } from '@/lib/api'
@@ -68,9 +68,10 @@ const SAMPLE_PORTFOLIO_ITEMS = [
 export default function WorkerProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [worker, setWorker] = useState<any>(() => MOCK_WORKERS.find((w) => w.id === id) ?? MOCK_WORKERS[0])
-  const [portfolioItems, setPortfolioItems] = useState<any[]>(SAMPLE_PORTFOLIO_ITEMS)
+  const [worker, setWorker] = useState<any>(() => MOCK_WORKERS.find((w) => w.id === id) ?? null)
+  const [portfolioItems, setPortfolioItems] = useState<any[]>([])
   const [reviewsList, setReviewsList] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
   const [isSaved, setIsSaved] = useState(false)
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false)
@@ -80,6 +81,7 @@ export default function WorkerProfilePage() {
   useEffect(() => {
     async function loadWorker() {
       if (!id) return
+      setIsLoading(true)
       try {
         const res = await servicesApi.getWorkerDetail(id)
         if (res) {
@@ -116,13 +118,16 @@ export default function WorkerProfilePage() {
           }
         }
       } catch (e) {
-        console.warn('Using default worker profile', e)
+        console.warn('Worker profile not found', e)
+      } finally {
+        setIsLoading(false)
       }
     }
     loadWorker()
   }, [id])
 
   const handleStartMessage = async () => {
+    if (!worker) return
     const contact = {
       id: worker.id,
       name: worker.displayName || `${worker.first_name || 'Artisan'} ${worker.last_name || ''}`,
@@ -147,6 +152,33 @@ export default function WorkerProfilePage() {
   const visitorLocation = useAppStore((s) => s.userLocation)
   const hasVisitorLocation = useAppStore((s) => s.hasLocationSet)
   const setLocationPromptOpen = useAppStore((s) => s.setLocationPromptOpen)
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-dark-bg text-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-sm text-gray-300">Loading verified artisan credentials...</p>
+      </div>
+    )
+  }
+
+  if (!worker) {
+    return (
+      <div className="min-h-screen bg-dark-bg text-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center mb-4">
+          <Wrench className="w-8 h-8 text-primary-400" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">Artisan Profile Not Found</h2>
+        <p className="text-sm text-gray-400 max-w-sm mb-6">This artisan has not registered yet or is pending verification.</p>
+        <button
+          onClick={() => navigate('/workers')}
+          className="px-5 py-2.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold transition-all shadow-md cursor-pointer"
+        >
+          Browse Verified Artisans
+        </button>
+      </div>
+    )
+  }
 
   const workerLat = worker.latitude || worker.location?.lat || 6.6018
   const workerLng = worker.longitude || worker.location?.lng || 3.3515

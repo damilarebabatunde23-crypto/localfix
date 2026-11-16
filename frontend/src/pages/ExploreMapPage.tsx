@@ -349,7 +349,20 @@ export default function ExploreMapPage() {
 
               {/* Worker list */}
               <div className="space-y-3">
-                {filteredWorkers.map((worker) => (
+                {filteredWorkers.length === 0 ? (
+                  <div className="p-6 text-center text-gray-400 glass-panel rounded-2xl">
+                    <Search className="w-8 h-8 text-primary-400 mx-auto mb-2 opacity-60" />
+                    <p className="text-sm font-bold text-white">No Registered Artisans Found</p>
+                    <p className="text-xs text-gray-400 mt-1">Be the first verified artisan in this location to join the platform.</p>
+                    <button
+                      onClick={() => navigate('/auth?tab=register')}
+                      className="mt-4 px-4 py-2 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold transition-all shadow-md cursor-pointer"
+                    >
+                      Register as Artisan
+                    </button>
+                  </div>
+                ) : (
+                  filteredWorkers.map((worker) => (
                   <motion.div
                     key={worker.id}
                     layout
@@ -421,7 +434,7 @@ export default function ExploreMapPage() {
                       </div>
                     </div>
                   </motion.div>
-                ))}
+                )))}
               </div>
             </div>
           </motion.aside>
@@ -525,7 +538,7 @@ export default function ExploreMapPage() {
               </Marker>
 
               {/* Worker markers */}
-              {(filteredWorkers.length > 0 ? filteredWorkers : MOCK_WORKERS).map((worker) => (
+              {filteredWorkers.map((worker) => (
                 <Marker
                   key={worker.id}
                   position={[worker.location.lat, worker.location.lng]}

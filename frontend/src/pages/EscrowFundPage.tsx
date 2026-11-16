@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -27,7 +27,20 @@ import toast from 'react-hot-toast'
 export default function EscrowFundPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const worker = MOCK_WORKERS.find((w) => w.id === id) ?? MOCK_WORKERS[0]
+  const [worker, setWorker] = useState<any>(() => MOCK_WORKERS.find((w) => w.id === id) ?? null)
+
+  useEffect(() => {
+    if (!id) return
+    import('@/lib/api').then(({ servicesApi }) => {
+      servicesApi.getWorkerDetail(id).then((res) => {
+        if (res) {
+          import('@/lib/utils').then(({ normalizeWorker }) => {
+            setWorker(normalizeWorker(res))
+          })
+        }
+      }).catch(() => {})
+    })
+  }, [id])
 
   const [paymentChannel, setPaymentChannel] = useState<'bank' | 'card' | 'wallet' | 'ussd'>('bank')
   const [copiedNuban, setCopiedNuban] = useState(false)

@@ -25,7 +25,7 @@ import toast from 'react-hot-toast'
 export default function DisputeMediationPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const worker = MOCK_WORKERS.find((w) => w.id === id) ?? MOCK_WORKERS[0]
+  const [worker, setWorker] = useState<any>(() => MOCK_WORKERS.find((w) => w.id === id) ?? null)
 
   const [activeAction, setActiveAction] = useState<string | null>(null)
 

@@ -26,7 +26,7 @@ export default function EscrowSettlementPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const vaultRef = id || 'LX-7829-INV'
-  const worker = MOCK_WORKERS.find((w) => w.id === id) ?? MOCK_WORKERS[0]
+  const [worker, setWorker] = useState<any>(() => MOCK_WORKERS.find((w) => w.id === id) ?? null)
 
   const [vaultData, setVaultData] = useState<any>(null)
   const [otp, setOtp] = useState(['7', '4', '9', '2'])

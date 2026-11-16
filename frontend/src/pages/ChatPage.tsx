@@ -20,6 +20,7 @@ import {
   ChevronRight,
   FileText,
   MessageCircle,
+  MessageSquare,
 } from 'lucide-react'
 import { MOCK_WORKERS, normalizeWorker } from '@/lib/utils'
 import { chatApi, uploadApi, servicesApi } from '@/lib/api'
@@ -29,101 +30,6 @@ import toast from 'react-hot-toast'
 
 const QUICK_EMOJIS = ['😀', '😂', '❤️', '😍', '🔥', '👏', '🙏', '💯', '⚡', '🛠️', '₦', '👍']
 const REACTION_CHOICES = ['👍', '❤️', '😂', '😮', '😢', '😡', '🔥']
-
-// Active contacts for the horizontal "Active Now" Facebook story bar
-const ACTIVE_NOW_CONTACTS = [
-  { id: '1', name: 'Babatunde O.', role: 'Solar Specialist', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80' },
-  { id: '2', name: 'Aisha Musa', role: 'Inverter Tech', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80' },
-  { id: '3', name: 'Emeka Obi', role: 'Master Electrician', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80' },
-  { id: '4', name: 'Fatima Bello', role: 'POP & Painting', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80' },
-  { id: '5', name: 'Kelechi Nwosu', role: 'Plumbing Eng.', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80' },
-]
-
-const DEMO_THREADS = [
-  {
-    id: 'thread-1',
-    user: {
-      id: MOCK_WORKERS[1].id,
-      name: MOCK_WORKERS[1].displayName || 'Babatunde Oladipo',
-      avatar: MOCK_WORKERS[1].avatar,
-      role: 'Solar & Inverter Specialist',
-      online: true,
-      phone: '+234 802 345 6789',
-    },
-    lastMessage: 'Confirmed! 2:30 PM works. I will ping you 15 minutes before arrival. 👍',
-    time: '10:22 AM',
-    unread: 0,
-  },
-  {
-    id: 'thread-2',
-    user: {
-      id: MOCK_WORKERS[0]?.id || 'w-0',
-      name: MOCK_WORKERS[0]?.displayName || 'Chidi Okafor',
-      avatar: MOCK_WORKERS[0]?.avatar,
-      role: 'Industrial Plumber',
-      online: true,
-      phone: '+234 803 123 4567',
-    },
-    lastMessage: 'I have the high pressure copper joints in stock. Let me know when ready.',
-    time: 'Yesterday',
-    unread: 2,
-  },
-  {
-    id: 'thread-3',
-    user: {
-      id: 'w-support',
-      name: 'LocalFix Escrow Desk',
-      avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=EscrowSupport',
-      role: 'Official Platform Security',
-      online: true,
-      phone: '0800-LOCALFIX',
-    },
-    lastMessage: '🛡️ Vault #LX-7829-INV milestone released successfully.',
-    time: '2 days ago',
-    unread: 0,
-  },
-]
-
-const INITIAL_MESSAGES = [
-  {
-    id: '1',
-    senderId: 'worker',
-    text: 'Hello! I saw your job request for AC repair in Ikeja GRA. I specialize in inverter ACs and can come as early as this afternoon.',
-    time: '10:12 AM',
-    read: true,
-    reactions: { '👍': 1 },
-  },
-  {
-    id: '2',
-    senderId: 'me',
-    text: 'Great! The unit makes a rattling noise when it starts up and the cooling has reduced. It is a 1.5HP Haier Thermocool split unit.',
-    time: '10:15 AM',
-    read: true,
-  },
-  {
-    id: '3',
-    senderId: 'worker',
-    text: 'Understood. That sounds like it could be a refrigerant issue or a loose fan blade. My callout is ₦9,500 which covers inspection + diagnosis. If parts are needed, I will give a separate itemized quote.',
-    time: '10:17 AM',
-    read: true,
-  },
-  {
-    id: '4',
-    senderId: 'me',
-    text: 'That works for me. Can you come at 2pm today?',
-    time: '10:18 AM',
-    read: true,
-    userReaction: '❤️',
-    reactions: { '❤️': 1 },
-  },
-  {
-    id: '5',
-    senderId: 'worker',
-    text: '✅ Confirmed! I will be there by 2PM. Please share your exact address and I will ping you when I am 10 minutes away.',
-    time: '10:20 AM',
-    read: true,
-  },
-]
 
 export default function ChatPage() {
   const navigate = useNavigate()
@@ -135,8 +41,9 @@ export default function ChatPage() {
   const sendThumbsUp = useChatStore((s) => s.sendThumbsUp)
   const addReaction = useChatStore((s) => s.addReaction)
 
-  const [threads, setThreads] = useState<any[]>(DEMO_THREADS)
-  const [selectedThreadId, setSelectedThreadId] = useState<string>('thread-1')
+  const [threads, setThreads] = useState<any[]>([])
+  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)
+  const [activeNow, setActiveNow] = useState<any[]>([])
   const [input, setInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [showRightPanel, setShowRightPanel] = useState(false)
@@ -151,8 +58,24 @@ export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const activeThread = threads.find((t) => t.id === selectedThreadId) || threads[0]
-  const currentCounterpart = activeThread?.user || DEMO_THREADS[0].user
+  const activeThread = threads.find((t) => t.id === selectedThreadId) || (threads.length > 0 ? threads[0] : null)
+  const currentCounterpart = activeThread?.user || null
+
+  // Fetch real active artisans for stories carousel
+  useEffect(() => {
+    servicesApi.getWorkers().then((res: any) => {
+      const list = res.results || res || []
+      if (Array.isArray(list)) {
+        const online = list.filter((w: any) => w.is_online).map((w: any) => ({
+          id: String(w.id),
+          name: `${w.user?.first_name || ''} ${w.user?.last_name || ''}`.trim() || w.profession,
+          avatar: w.user?.avatar_url || w.user?.avatar,
+          role: w.profession,
+        }))
+        setActiveNow(online)
+      }
+    }).catch(() => {})
+  }, [])
 
   // Check query params to preselect worker or thread
   useEffect(() => {
@@ -160,52 +83,29 @@ export default function ChatPage() {
     const convParam = searchParams.get('conversation')
 
     if (workerParam) {
-      const matchWorker = MOCK_WORKERS.find((w) => w.id === workerParam)
-      if (matchWorker) {
-        const customThread = {
-          id: `worker-${workerParam}`,
-          user: {
-            id: matchWorker.id,
-            name: matchWorker.displayName,
-            avatar: matchWorker.avatar,
-            role: matchWorker.profession || 'Artisan',
-            online: true,
-            phone: (matchWorker as any).phone || '+234 800 000 0000',
-          },
-          lastMessage: 'Ready to discuss requirements.',
-          time: 'Just now',
-          unread: 0,
-        }
-        setThreads((prev) => [customThread, ...prev.filter((t) => t.id !== customThread.id)])
-        setSelectedThreadId(customThread.id)
-        setMobileView('chat')
-        useChatStore.getState().openChat(customThread.user, undefined)
-      } else {
-        // Fetch dynamic or newly registered artisan from backend API
-        servicesApi.getWorkerDetail(workerParam).then((res: any) => {
-          if (res) {
-            const nw = normalizeWorker(res)
-            const customThread = {
-              id: `worker-${nw.id}`,
-              user: {
-                id: nw.id,
-                name: nw.displayName,
-                avatar: nw.avatar,
-                role: nw.profession,
-                online: true,
-                phone: nw.phone,
-              },
-              lastMessage: 'Ready to discuss requirements.',
-              time: 'Just now',
-              unread: 0,
-            }
-            setThreads((prev) => [customThread, ...prev.filter((t) => t.id !== customThread.id)])
-            setSelectedThreadId(customThread.id)
-            setMobileView('chat')
-            useChatStore.getState().openChat(customThread.user, undefined)
+      servicesApi.getWorkerDetail(workerParam).then((res: any) => {
+        if (res) {
+          const nw = normalizeWorker(res)
+          const customThread = {
+            id: `worker-${nw.id}`,
+            user: {
+              id: nw.id,
+              name: nw.displayName,
+              avatar: nw.avatar,
+              role: nw.profession,
+              online: true,
+              phone: nw.phone,
+            },
+            lastMessage: 'Ready to discuss requirements.',
+            time: 'Just now',
+            unread: 0,
           }
-        }).catch(() => {})
-      }
+          setThreads((prev) => [customThread, ...prev.filter((t) => t.id !== customThread.id)])
+          setSelectedThreadId(customThread.id)
+          setMobileView('chat')
+          useChatStore.getState().openChat(customThread.user, undefined)
+        }
+      }).catch(() => {})
     } else if (convParam) {
       setSelectedThreadId(convParam)
       setMobileView('chat')
@@ -376,93 +276,104 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* Facebook Active Now Carousel (Stories / Online Friends) */}
-        <div className="px-4 py-2 border-b border-white/5">
-          <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-            Active Now · Available Artisans
-          </div>
-          <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1">
-            {ACTIVE_NOW_CONTACTS.map((c) => (
-              <div
-                key={c.id}
-                onClick={() => {
-                  const targetThread = {
-                    id: `active-${c.id}`,
-                    user: {
-                      id: c.id,
-                      name: c.name,
-                      avatar: c.avatar,
-                      role: c.role,
-                      online: true,
-                    },
-                    lastMessage: 'Ready to connect!',
-                    time: 'Active now',
-                    unread: 0,
-                  }
-                  setThreads((prev) => [targetThread, ...prev.filter((t) => t.id !== targetThread.id)])
-                  setSelectedThreadId(targetThread.id)
-                  setMobileView('chat')
-                }}
-                className="flex flex-col items-center gap-1 cursor-pointer group flex-shrink-0"
-              >
-                <div className="relative">
-                  <div className="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-blue-500 via-primary-500 to-purple-400 group-hover:scale-105 transition-transform">
-                    <img src={c.avatar} alt={c.name} className="w-full h-full rounded-full object-cover border-2 border-[#151025]" />
+        {/* Active Now Online Carousel (Real Online Artisans Only) */}
+        {activeNow.length > 0 && (
+          <div className="px-4 py-2 border-b border-white/5">
+            <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+              Active Now · Available Artisans
+            </div>
+            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1">
+              {activeNow.map((c) => (
+                <div
+                  key={c.id}
+                  onClick={() => {
+                    const targetThread = {
+                      id: `active-${c.id}`,
+                      user: {
+                        id: c.id,
+                        name: c.name,
+                        avatar: c.avatar,
+                        role: c.role,
+                        online: true,
+                      },
+                      lastMessage: 'Ready to connect!',
+                      time: 'Active now',
+                      unread: 0,
+                    }
+                    setThreads((prev) => [targetThread, ...prev.filter((t) => t.id !== targetThread.id)])
+                    setSelectedThreadId(targetThread.id)
+                    setMobileView('chat')
+                    useChatStore.getState().openChat(targetThread.user, undefined)
+                  }}
+                  className="flex flex-col items-center gap-1 cursor-pointer group flex-shrink-0"
+                >
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-primary-600 via-primary-500 to-purple-400 group-hover:scale-105 transition-transform">
+                      <img src={c.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.name}&backgroundColor=6D28D9`} alt={c.name} className="w-full h-full rounded-full object-cover border-2 border-[#151025]" />
+                    </div>
+                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#151025]" />
                   </div>
-                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#151025]" />
+                  <span className="text-[11px] text-gray-300 group-hover:text-white font-medium truncate max-w-[60px] text-center">
+                    {c.name.split(' ')[0]}
+                  </span>
                 </div>
-                <span className="text-[11px] text-gray-300 group-hover:text-white font-medium truncate max-w-[60px] text-center">
-                  {c.name.split(' ')[0]}
-                </span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Thread List */}
         <div className="flex-1 overflow-y-auto no-scrollbar divide-y divide-white/5">
-          {filteredThreads.map((thread) => {
-            const isSelected = thread.id === selectedThreadId
-            return (
-              <div
-                key={thread.id}
-                onClick={() => {
-                  setSelectedThreadId(thread.id)
-                  setMobileView('chat')
-                  useChatStore.getState().openChat(thread.user, thread.id.startsWith('thread-') ? undefined : thread.id)
-                }}
-                className={`p-3.5 flex items-center gap-3 cursor-pointer transition-colors ${
-                  isSelected ? 'bg-primary-600/20 border-l-4 border-primary-500' : 'hover:bg-white/5'
-                }`}
-              >
-                <div className="relative flex-shrink-0">
-                  <img
-                    src={thread.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${thread.user.name}&backgroundColor=6D28D9`}
-                    alt={thread.user.name}
-                    className="w-12 h-12 rounded-full object-cover border border-white/10"
-                  />
-                  {thread.user.online && (
-                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#151025]" />
-                  )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-bold text-white truncate max-w-[140px]">{thread.user.name}</span>
-                    <span className="text-[10px] text-gray-500">{thread.time}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-gray-400 truncate max-w-[180px]">{thread.lastMessage}</p>
-                    {thread.unread > 0 && (
-                      <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">
-                        {thread.unread}
-                      </span>
+          {filteredThreads.length === 0 ? (
+            <div className="p-8 text-center text-gray-400 flex flex-col items-center justify-center">
+              <MessageSquare className="w-8 h-8 text-primary-400/60 mb-2" />
+              <p className="text-xs font-semibold text-white">No active conversations</p>
+              <p className="text-[11px] text-gray-400 mt-1 max-w-[200px]">When you connect with verified artisans or clients, your messages will appear here.</p>
+            </div>
+          ) : (
+            filteredThreads.map((thread) => {
+              const isSelected = thread.id === selectedThreadId
+              return (
+                <div
+                  key={thread.id}
+                  onClick={() => {
+                    setSelectedThreadId(thread.id)
+                    setMobileView('chat')
+                    useChatStore.getState().openChat(thread.user, thread.id.startsWith('thread-') ? undefined : thread.id)
+                  }}
+                  className={`p-3.5 flex items-center gap-3 cursor-pointer transition-colors ${
+                    isSelected ? 'bg-primary-600/20 border-l-4 border-primary-500' : 'hover:bg-white/5'
+                  }`}
+                >
+                  <div className="relative flex-shrink-0">
+                    <img
+                      src={thread.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${thread.user.name}&backgroundColor=6D28D9`}
+                      alt={thread.user.name}
+                      className="w-12 h-12 rounded-full object-cover border border-white/10"
+                    />
+                    {thread.user.online && (
+                      <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#151025]" />
                     )}
                   </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-bold text-white truncate max-w-[140px]">{thread.user.name}</span>
+                      <span className="text-[10px] text-gray-500">{thread.time}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-gray-400 truncate max-w-[180px]">{thread.lastMessage}</p>
+                      {thread.unread > 0 && (
+                        <span className="w-5 h-5 rounded-full bg-primary-600 text-white text-[10px] font-bold flex items-center justify-center">
+                          {thread.unread}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })
+          )}
         </div>
       </div>
 
@@ -474,14 +385,30 @@ export default function ChatPage() {
           mobileView === 'chat' ? 'flex' : 'hidden md:flex'
         } flex-1 flex-col h-full bg-[#110d1f] relative overflow-hidden`}
       >
-        {/* Chat Header */}
-        <div
-          className="px-4 py-3 flex items-center justify-between flex-shrink-0"
-          style={{
-            background: '#160F29',
-            borderBottom: '1px solid rgba(167, 139, 250, 0.15)',
-          }}
-        >
+        {!activeThread || !currentCounterpart ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-400 bg-[#0E0A1A]">
+            <div className="w-16 h-16 rounded-2xl bg-primary-500/10 flex items-center justify-center mb-4 border border-primary-500/20">
+              <MessageSquare className="w-8 h-8 text-primary-400" />
+            </div>
+            <h3 className="text-lg font-bold text-white mb-1">Your Inbox is Ready</h3>
+            <p className="text-xs text-gray-400 max-w-sm mb-6">Explore verified artisans in your area and click "Message" or "Direct Call" to connect in real-time.</p>
+            <button
+              onClick={() => navigate('/workers')}
+              className="px-5 py-2.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold transition-all shadow-lg cursor-pointer"
+            >
+              Browse Verified Artisans
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Chat Header */}
+            <div
+              className="px-4 py-3 flex items-center justify-between flex-shrink-0"
+              style={{
+                background: '#160F29',
+                borderBottom: '1px solid rgba(167, 139, 250, 0.15)',
+              }}
+            >
           <div className="flex items-center gap-3 min-w-0">
             {/* Mobile Back to Threads */}
             <button
@@ -843,28 +770,30 @@ export default function ChatPage() {
           {input.trim().length === 0 ? (
             <button
               onClick={handleSendThumbsUp}
-              className="p-2 rounded-full text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 hover:scale-115 active:scale-95 transition-all cursor-pointer"
-              title="Send Facebook Thumbs Up 👍"
+              className="p-2 rounded-full text-primary-400 hover:text-primary-300 hover:bg-white/5 hover:scale-115 active:scale-95 transition-all cursor-pointer"
+              title="Send Thumbs Up 👍"
             >
-              <ThumbsUp className="w-6 h-6 fill-blue-500" />
+              <ThumbsUp className="w-6 h-6 fill-primary-400" />
             </button>
           ) : (
             <button
               onClick={() => handleSendMessage()}
-              className="p-2.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white hover:scale-105 active:scale-95 transition-all shadow-md cursor-pointer"
+              className="p-2.5 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-white hover:scale-105 active:scale-95 transition-all shadow-md cursor-pointer"
               title="Send message"
             >
               <Send className="w-4 h-4" />
             </button>
           )}
         </div>
+        </>
+        )}
       </div>
 
       {/* ======================================================== */}
       {/* 3. RIGHT DETAILS PANEL: Facebook Messenger Profile Drawer */}
       {/* ======================================================== */}
       <AnimatePresence>
-        {showRightPanel && (
+        {showRightPanel && currentCounterpart && (
           <motion.div
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: 320, opacity: 1 }}

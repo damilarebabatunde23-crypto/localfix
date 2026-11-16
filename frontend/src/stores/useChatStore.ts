@@ -43,7 +43,7 @@ export interface ActiveCallState {
 interface ChatStoreState {
   isOpen: boolean
   isMinimized: boolean
-  activeContact: ChatContact
+  activeContact: ChatContact | null
   activeConversationId: string | null
   messages: ChatMessageItem[]
   isTyping: boolean
@@ -77,14 +77,7 @@ interface ChatStoreState {
   declineIncomingCall: () => Promise<void>
 }
 
-const DEFAULT_CONTACT: ChatContact = {
-  id: MOCK_WORKERS[1].id,
-  name: MOCK_WORKERS[1].displayName || 'Babatunde Oladipo',
-  avatar: MOCK_WORKERS[1].avatar,
-  role: 'Solar & Inverter Specialist',
-  online: true,
-  phone: '+234 802 345 6789',
-}
+const DEFAULT_CONTACT: ChatContact | null = null
 
 const DEFAULT_MESSAGES: ChatMessageItem[] = []
 
@@ -159,9 +152,9 @@ export const playChatSound = (type: 'pop' | 'ring' | 'end' | 'connect') => {
 export const useChatStore = create<ChatStoreState>()(
   persist(
     (set, get) => ({
-      isOpen: true, // Permanent by default!
-      isMinimized: false,
-      activeContact: DEFAULT_CONTACT,
+      isOpen: false,
+      isMinimized: true,
+      activeContact: null,
       activeConversationId: null,
       messages: DEFAULT_MESSAGES,
       isTyping: false,
@@ -175,15 +168,16 @@ export const useChatStore = create<ChatStoreState>()(
       },
 
       openChat: async (contact, conversationId) => {
-        const current = get().activeContact || DEFAULT_CONTACT
+        const current = get().activeContact
+        if (!contact && !current) return
         const targetContact: ChatContact = {
-          id: contact?.id || current.id,
-          name: contact?.name || current.name,
-          avatar: contact?.avatar || current.avatar,
-          role: contact?.role || current.role,
+          id: contact?.id || current?.id || '',
+          name: contact?.name || current?.name || 'LocalFix User',
+          avatar: contact?.avatar || current?.avatar,
+          role: contact?.role || current?.role || 'Member',
           online: contact?.online ?? true,
-          conversationId: conversationId || contact?.conversationId || current.conversationId,
-          phone: contact?.phone || current.phone,
+          conversationId: conversationId || contact?.conversationId || current?.conversationId,
+          phone: contact?.phone || current?.phone,
         }
 
         set({
@@ -399,7 +393,8 @@ export const useChatStore = create<ChatStoreState>()(
 
       // Call actions
       startCall: (type, contact, callId) => {
-        const target = contact || get().activeContact || DEFAULT_CONTACT
+        const target = contact || get().activeContact
+        if (!target) return
         playChatSound('ring')
         set({
           activeCall: {

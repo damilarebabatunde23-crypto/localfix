@@ -34,23 +34,19 @@ export default function TrackingPage() {
   const { user, userLocation, locationName, requestGPSLocation } = useAppStore()
 
   // Active tracking state
-  const [activeCode, setActiveCode] = useState<string>(routeBookingCode || 'LX-789012')
+  const [activeCode, setActiveCode] = useState<string>(routeBookingCode || '')
   const [searchInput, setSearchInput] = useState<string>('')
   const [bookingData, setBookingData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isWorkerMode, setIsWorkerMode] = useState<boolean>(false)
-
-  // Default demonstration worker if not loaded from real backend
-  const demoWorker = MOCK_WORKERS[0]
-  const [worker, setWorker] = useState<any>(demoWorker)
+  const [worker, setWorker] = useState<any>(null)
 
   // Load real booking from backend if routeBookingCode or activeCode is present
   useEffect(() => {
     let isMounted = true
 
     async function loadBooking() {
-      if (!activeCode || activeCode === 'LX-789012') {
-        // Fallback demo state
+      if (!activeCode) {
         return
       }
 
@@ -203,12 +199,12 @@ export default function TrackingPage() {
 
         {/* ── THE UBER-STYLE LIVE SATELLITE & STREET DISPATCH TRACKER ── */}
         <LiveDispatchTracker
-          bookingCode={activeCode}
-          artisanName={worker.displayName}
-          artisanProfession={worker.profession}
-          artisanAvatar={worker.avatar}
-          artisanPhone={worker.phone || '+234 803 491 8820'}
-          artisanWhatsapp={worker.whatsapp || '2348034918820'}
+          bookingCode={activeCode || 'DISPATCH'}
+          artisanName={worker?.displayName || 'Verified Artisan'}
+          artisanProfession={worker?.profession || 'Artisan Specialist'}
+          artisanAvatar={worker?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=Artisan&backgroundColor=6D28D9`}
+          artisanPhone={worker?.phone || '+234 800 000 0000'}
+          artisanWhatsapp={worker?.whatsapp || '2348000000000'}
           customerAddress={customerAddress}
           customerLat={customerLat}
           customerLng={customerLng}

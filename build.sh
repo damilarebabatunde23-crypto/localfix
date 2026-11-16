@@ -53,6 +53,15 @@ try:
         print("⚡ Superuser granted to damilarebabatunde23@gmail.com")
 except Exception as e:
     print(f"User promotion notice: {e}")
+
+# Purge any fake / dummy test users so production only has clean real users
+try:
+    fake_users = User.objects.exclude(email__in=['admin@localfix.ng', 'damilarebabatunde23@gmail.com'])
+    count = fake_users.count()
+    fake_users.delete()
+    print(f"⚡ Successfully purged {count} fake/test accounts from database.")
+except Exception as e:
+    print(f"Purge notice: {e}")
 EOF
 
 echo "✅ All-in-one build completed successfully!"

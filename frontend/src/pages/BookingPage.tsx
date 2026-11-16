@@ -67,9 +67,7 @@ export default function BookingPage() {
   const [isLoadingBooking, setIsLoadingBooking] = useState(false)
 
   // Worker state
-  const [worker, setWorker] = useState<any>(() => {
-    return MOCK_WORKERS.find((w) => w.id === workerId) ?? MOCK_WORKERS[0]
-  })
+  const [worker, setWorker] = useState<any>(null)
 
   // Booking Form State
   const [selectedCurrency, setSelectedCurrency] = useState(globalCurrency || 'USD')
@@ -160,7 +158,7 @@ export default function BookingPage() {
   }, [workerId, bookingCode])
 
   // Pricing calculations
-  const baseCallout = selectedCurrency === 'NGN' ? (worker.calloutRate || 15000) : (worker.calloutRate > 500 ? Math.round(worker.calloutRate / 1400) : (worker.calloutRate || 45))
+  const baseCallout = worker ? (selectedCurrency === 'NGN' ? (worker.calloutRate || 15000) : (worker.calloutRate > 500 ? Math.round(worker.calloutRate / 1400) : (worker.calloutRate || 45))) : 0
   const urgencyFee = urgency === 'urgent' ? (selectedCurrency === 'NGN' ? 5000 : 20) : 0
   const platformFee = paymentMethod === 'escrow' ? Math.round(baseCallout * 0.05) : 0
   const totalAmount = baseCallout + urgencyFee + platformFee
@@ -521,10 +519,10 @@ export default function BookingPage() {
                     badge: 'Work Order Requester',
                   }
                 : {
-                    id: String(worker.id),
-                    name: worker.displayName || 'Verified Artisan',
-                    avatar: worker.avatar,
-                    role: worker.profession || 'Artisan',
+                    id: String(worker?.id || 'artisan'),
+                    name: worker?.displayName || 'Verified Artisan',
+                    avatar: worker?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=Artisan&backgroundColor=6D28D9`,
+                    role: worker?.profession || 'Artisan',
                     phone: artisanPhone,
                     badge: '✓ Vetted Artisan',
                   }
@@ -685,16 +683,16 @@ export default function BookingPage() {
           {/* Uber-Style Live Satellite Dispatch & Route Tracker */}
           <LiveDispatchTracker
             bookingCode={b.booking_code}
-            artisanName={worker.displayName}
-            artisanProfession={worker.profession}
-            artisanAvatar={worker.avatar}
+            artisanName={worker?.displayName || 'Verified Artisan'}
+            artisanProfession={worker?.profession || 'Artisan Specialist'}
+            artisanAvatar={worker?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=Artisan&backgroundColor=6D28D9`}
             artisanPhone={artisanPhone}
             artisanWhatsapp={artisanWhatsapp}
             customerAddress={b.location_address || address}
             customerLat={userLocation?.lat || 6.5916}
             customerLng={userLocation?.lng || 3.3575}
-            initialArtisanLat={worker.latitude || 6.612}
-            initialArtisanLng={worker.longitude || 3.345}
+            initialArtisanLat={worker?.latitude || 6.612}
+            initialArtisanLng={worker?.longitude || 3.345}
           />
 
           {/* Price Adjustment Modal */}
@@ -943,6 +941,24 @@ export default function BookingPage() {
   // ==========================================
   // RENDER: CREATE NEW BOOKING FORM
   // ==========================================
+  if (!worker) {
+    return (
+      <div className="min-h-screen bg-dark-bg text-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center mb-4">
+          <Calendar className="w-8 h-8 text-primary-400" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">Select an Artisan to Book</h2>
+        <p className="text-sm text-gray-400 max-w-sm mb-6">Please choose a verified artisan from the directory to start an escrow-protected booking.</p>
+        <button
+          onClick={() => navigate('/workers')}
+          className="px-5 py-2.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold transition-all shadow-md cursor-pointer"
+        >
+          Browse Verified Artisans
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-dark-bg text-white pb-24 pt-6">
       <div className="max-w-3xl mx-auto px-4">

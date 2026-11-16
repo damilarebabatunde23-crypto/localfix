@@ -109,6 +109,10 @@ export default function FacebookChatDock() {
     closeChat()
   }
 
+  if (!isOpen || !activeContact) {
+    return null
+  }
+
   return (
     <div className="fixed bottom-20 sm:bottom-0 right-3 sm:right-6 z-50 select-none">
       <AnimatePresence mode="wait">
