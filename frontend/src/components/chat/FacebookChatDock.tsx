@@ -563,22 +563,22 @@ export default function FacebookChatDock() {
                 />
               </div>
 
-              {/* ── Facebook Signature: Thumbs-Up vs Send Toggle ── */}
+              {/* ── Signature Thumbs-Up vs Send Toggle ── */}
               {input.trim().length === 0 ? (
                 <button
                   onClick={sendThumbsUp}
-                  className="p-1.5 rounded-full text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 hover:scale-110 active:scale-90 transition-all cursor-pointer"
+                  className="p-1.5 rounded-full text-[#7C3AED] hover:text-[#A78BFA] hover:bg-primary-500/10 hover:scale-110 active:scale-90 transition-all cursor-pointer"
                   title="Send Thumbs Up 👍"
                 >
-                  <ThumbsUp className="w-5 h-5 fill-blue-500" />
+                  <ThumbsUp className="w-5 h-5 fill-[#7C3AED]" />
                 </button>
               ) : (
                 <button
                   onClick={handleSend}
-                  className="p-1.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white hover:scale-105 active:scale-95 transition-all shadow-md cursor-pointer"
+                  className="p-1.5 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-white hover:scale-105 active:scale-95 transition-all shadow-md cursor-pointer"
                   title="Send message"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-4 h-4 text-white" />
                 </button>
               )}
             </div>

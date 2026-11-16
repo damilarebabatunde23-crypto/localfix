@@ -295,7 +295,7 @@ export default function Navbar() {
               >
                 <MessageSquare className="w-4 h-4" />
                 {unreadMessages > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center animate-pulse">
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#7C3AED] text-white text-[9px] font-bold flex items-center justify-center animate-pulse">
                     {unreadMessages}
                   </span>
                 )}

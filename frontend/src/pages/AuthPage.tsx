@@ -1084,13 +1084,13 @@ export default function AuthPage() {
                   <motion.div key="register" {...fadeVariants} transition={{ duration: 0.2 }} className="space-y-4">
 
                     {/* Direct Google Sign-Up Highlight Banner */}
-                    <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-emerald-600/20 border border-primary-500/30 space-y-3 shadow-glow-sm">
+                    <div className="p-4 rounded-2xl bg-[#1E1538] border border-primary-500/30 space-y-3 shadow-glow-sm">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                        <span className="text-[10px] font-bold text-primary-300 uppercase tracking-wider flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-primary-400" />
                           Direct Google Onboarding
                         </span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary-500/20 text-primary-200 border border-primary-500/30 font-bold">
                           Instant 1-Click
                         </span>
                       </div>
@@ -1715,7 +1715,7 @@ export default function AuthPage() {
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white">Enter your Google Account email:</span>
-                    <span className="text-[10px] text-blue-300 bg-blue-900/40 border border-blue-500/30 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] text-primary-300 bg-primary-900/40 border border-primary-500/30 px-2 py-0.5 rounded-full">
                       All Google Users
                     </span>
                   </div>
@@ -1726,19 +1726,19 @@ export default function AuthPage() {
                     placeholder="e.g. yourname@gmail.com"
                     required
                     autoFocus
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-gray-500 outline-none focus:border-blue-400 text-xs transition-colors"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-gray-500 outline-none focus:border-primary-400 text-xs transition-colors"
                   />
                   <input
                     type="text"
                     value={googleNameInput}
                     onChange={(e) => setGoogleNameInput(e.target.value)}
                     placeholder="Your Full Name (optional)"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-gray-500 outline-none focus:border-blue-400 text-xs transition-colors"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-gray-500 outline-none focus:border-primary-400 text-xs transition-colors"
                   />
                   <button
                     type="submit"
                     disabled={googleLoading}
-                    className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-colors shadow-glow flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-[#7C3AED] hover:bg-[#6D28D9] transition-colors shadow-glow flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {googleLoading ? (
                       'Authenticating with Google...'

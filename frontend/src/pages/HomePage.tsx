@@ -216,7 +216,7 @@ export default function HomePage() {
 
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white mb-3 max-w-2xl leading-tight">
                 Vetted Repairs, <br />
-                <span className="bg-gradient-to-r from-primary-300 via-primary-200 to-emerald-300 bg-clip-text text-transparent">
+                <span className="text-[#A78BFA] font-black">
                   Secured by Escrow.
                 </span>
               </h1>

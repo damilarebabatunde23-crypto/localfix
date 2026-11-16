@@ -259,8 +259,8 @@ export default function AIAssistantPage() {
             <div
               className={`w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-md ${
                 msg.role === 'assistant'
-                  ? 'bg-gradient-to-br from-primary-700 to-primary-500'
-                  : 'bg-emerald-600'
+                  ? 'bg-[#6D28D9]'
+                  : 'bg-[#7C3AED]'
               }`}
             >
               {msg.role === 'assistant' ? (
@@ -274,8 +274,8 @@ export default function AIAssistantPage() {
             <div
               className={`max-w-[85%] rounded-3xl px-5 py-4 text-sm leading-relaxed shadow-lg ${
                 msg.role === 'user'
-                  ? 'text-white rounded-tr-none bg-gradient-to-r from-primary-700 to-primary-600'
-                  : 'text-gray-100 rounded-tl-none bg-dark-card/90 border border-primary-500/20'
+                  ? 'text-white rounded-tr-none bg-[#7C3AED]'
+                  : 'text-white rounded-tl-none bg-[#160F29] border border-primary-500/25'
               }`}
             >
               {msg.role === 'assistant' && (
@@ -387,11 +387,11 @@ export default function AIAssistantPage() {
         {/* Loading bounce indicator */}
         {loading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-primary-700 to-primary-500 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-2xl bg-[#6D28D9] flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div
-              className="rounded-3xl rounded-tl-none px-5 py-4 bg-dark-card/90 border border-primary-500/20"
+              className="rounded-3xl rounded-tl-none px-5 py-4 bg-[#160F29] border border-primary-500/25"
             >
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-400">Analyzing diagnosis & finding matching artisans...</span>

@@ -645,7 +645,7 @@ export default function ChatPage() {
                   {isMe && (
                     <span>
                       {msg.read ? (
-                        <CheckCheck className="w-3.5 h-3.5 text-blue-400 inline" />
+                        <CheckCheck className="w-3.5 h-3.5 text-primary-400 inline" />
                       ) : (
                         <Check className="w-3.5 h-3.5 text-gray-400 inline" />
                       )}
