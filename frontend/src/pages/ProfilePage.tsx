@@ -672,7 +672,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-2 p-1.5 rounded-2xl glass-panel mb-6 overflow-x-auto">
+        <div role="tablist" aria-label="Profile sections" className="flex flex-wrap gap-1.5 sm:gap-2 p-1.5 rounded-2xl glass-panel mb-6">
           <button
             onClick={() => setTab('disputes')}
             className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap transition-all ${
@@ -729,16 +729,19 @@ export default function ProfilePage() {
 
           <button
             onClick={() => setTab('diagnostics')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap transition-all ${
+            className={`px-3 sm:px-4 py-2.5 rounded-xl text-xs font-semibold flex flex-wrap items-center gap-1.5 sm:gap-2 max-w-full transition-all ${
               activeTab === 'diagnostics'
                 ? 'bg-primary-700 text-white shadow-glow-sm'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
-            <Activity className="w-3.5 h-3.5" />
+            <Activity className="w-3.5 h-3.5 flex-shrink-0" />
             <span>Appliance Diagnostics</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded bg-primary-900/60 text-primary-300 font-bold border border-primary-500/30">
+            <span className="hidden sm:inline text-[10px] px-1.5 py-0.5 rounded bg-primary-900/60 text-primary-300 font-bold border border-primary-500/30">
               3 Connected • 1 Warning Resolved
+            </span>
+            <span className="sm:hidden text-[10px] px-1.5 py-0.5 rounded bg-primary-900/60 text-primary-300 font-bold border border-primary-500/30">
+              3
             </span>
           </button>
 
@@ -2090,7 +2093,7 @@ export default function ProfilePage() {
                   </div>
 
                   {/* 3 Metrics */}
-                  <div className="grid grid-cols-3 gap-3 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                     <div className="p-3 rounded-xl bg-white/5 border border-white/5">
                       <span className="text-[10px] text-gray-400 block">R410A Pressure</span>
                       <strong className="text-white text-base font-mono">122 PSI</strong>

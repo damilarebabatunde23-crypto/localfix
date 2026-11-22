@@ -147,18 +147,20 @@ export default function HomePage() {
     })
 
   return (
-    <div className="min-h-screen bg-dark-bg dark:bg-dark-bg" style={{ backgroundColor: 'var(--page-bg, #171326)' }}>
+    <div className="min-h-dvh bg-dark-bg dark:bg-dark-bg" style={{ backgroundColor: 'var(--page-bg, #171326)' }}>
       {/* Emergency banner */}
       <div
-        className="w-full py-2 px-4 flex items-center justify-between text-xs"
+        className="w-full py-2 px-3 sm:px-4 flex items-center justify-between text-xs"
         style={{ background: 'rgba(239,68,68,0.15)', borderBottom: '1px solid rgba(239,68,68,0.2)' }}
       >
-        <div className="flex items-center gap-2 max-w-[1400px] mx-auto w-full">
-          <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
-          <span className="text-red-300">
-            <strong>Emergency Repairs Available 24/7</strong> — Electricians, Gas & Plumbers on standby in {locationName.split(',')[0]}
-          </span>
-          <div className="ml-auto flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 max-w-[1400px] mx-auto w-full">
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+            <span className="text-red-300">
+              <strong>Emergency Repairs Available 24/7</strong> — Electricians, Gas &amp; Plumbers on standby in {locationName.split(',')[0]}
+            </span>
+          </div>
+          <div className="sm:ml-auto flex items-center gap-3 flex-shrink-0">
             <button
               onClick={() => navigate('/map')}
               className="text-primary-300 cursor-pointer hover:text-primary-200 font-semibold"
@@ -173,9 +175,9 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-6">
         {/* ── Hero Section with Background Image ── */}
-        <section className="relative rounded-3xl overflow-hidden mb-4 mt-4 mx-0 shadow-purple-lg border border-primary-500/30">
+        <section className="hero-banner relative rounded-2xl sm:rounded-3xl overflow-hidden mb-4 mt-4 mx-0 shadow-purple-lg border border-primary-500/30">
           {/* Background image */}
           <div
             className="absolute inset-0 z-0"
@@ -202,11 +204,11 @@ export default function HomePage() {
           />
 
           {/* Content */}
-          <div className="relative z-10 px-6 sm:px-8 pt-10 pb-8 text-white">
+          <div className="relative z-10 px-4 sm:px-8 pt-7 sm:pt-10 pb-6 sm:pb-8 text-white">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-primary-600/60 text-primary-200 border border-primary-400/30 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              <div className="flex flex-wrap items-center gap-2 mb-2.5">
+                <span className="px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-primary-600/60 text-primary-200 border border-primary-400/30 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
                   Global Hyperlocal Artisan Mesh · Active Worldwide
                 </span>
                 <span className="text-xs text-gray-300">
@@ -214,30 +216,33 @@ export default function HomePage() {
                 </span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white mb-3 max-w-2xl leading-tight">
+              <h1
+                className="font-black tracking-tight text-white mb-3 max-w-2xl leading-tight"
+                style={{ fontSize: 'clamp(1.75rem, 1.15rem + 2.6vw, 3rem)' }}
+              >
                 Vetted Repairs, <br />
                 <span className="text-[#A78BFA] font-black">
                   Secured by Escrow.
                 </span>
               </h1>
 
-              <p className="text-gray-300 text-sm sm:text-base mb-6 max-w-xl">
+              <p className="text-gray-300 text-sm sm:text-base mb-5 sm:mb-6 max-w-xl">
                 Connect with verified local electricians, plumbers, and technicians within 3km. Funds held safely until you sign off.
               </p>
 
               {/* Search Bar */}
-              <div className="max-w-2xl bg-dark-bg/80 backdrop-blur-md p-2 rounded-2xl border border-primary-500/40 shadow-purple-lg flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 flex-1">
+              <div className="max-w-2xl bg-dark-bg/80 backdrop-blur-md p-2 rounded-2xl border border-primary-500/40 shadow-purple-lg flex flex-col sm:flex-row sm:items-center gap-2">
+                <div className="flex items-center gap-2 px-2.5 sm:px-3 py-1 sm:py-0 flex-1 min-w-0">
                   <Search className="w-5 h-5 text-primary-400 flex-shrink-0" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search by trade (e.g. AC Gas, Inverter, Pipe Leak)..."
-                    className="w-full bg-transparent text-sm text-white placeholder-gray-400 outline-none"
+                    className="w-full min-w-0 bg-transparent text-sm text-white placeholder-gray-400 outline-none"
                   />
                   {searchQuery && (
-                    <button onClick={() => setSearchQuery('')} className="text-gray-400 hover:text-white">
+                    <button onClick={() => setSearchQuery('')} className="text-gray-400 hover:text-white flex-shrink-0" aria-label="Clear search">
                       <X className="w-4 h-4" />
                     </button>
                   )}
@@ -247,7 +252,7 @@ export default function HomePage() {
 
                 <button
                   onClick={() => navigate('/map')}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-300 hover:text-white"
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-300 hover:text-white flex-shrink-0"
                 >
                   <MapPin className="w-3.5 h-3.5 text-primary-400" />
                   <span>{locationName.split(',')[0]}</span>
@@ -259,7 +264,7 @@ export default function HomePage() {
                       toast.success(`Found artisans for "${searchQuery}"`)
                     }
                   }}
-                  className="px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 active:scale-95"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 active:scale-95 flex-shrink-0"
                   style={{ background: 'linear-gradient(135deg,#6D28D9,#7C3AED)', boxShadow: '0 4px 16px rgba(109,40,217,0.4)' }}
                 >
                   Find Pro
@@ -360,7 +365,7 @@ export default function HomePage() {
               </button>
             )}
           </div>
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-10 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-10 gap-2.5 sm:gap-3">
             {categories.map((cat, i) => (
               <motion.button
                 key={cat.id || cat.slug}
@@ -660,14 +665,14 @@ export default function HomePage() {
 
         {/* P2P Tool Rentals */}
         <section className="mb-10">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white text-lg font-bold">🔧 P2P Tool Rentals & Surplus Hardware</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <h2 className="text-white text-lg font-bold">🔧 P2P Tool Rentals &amp; Surplus Hardware</h2>
             <button onClick={() => navigate('/marketplace')} className="flex items-center gap-1 text-primary-400 text-sm hover:underline">
               Explore Marketplace <ChevronRight className="w-4 h-4" />
             </button>
           </div>
           <p className="text-gray-400 text-xs mb-4">Rent heavy diagnostic tools or buy unused renovation materials from vetted neighbors.</p>
-          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {(toolRentals.length > 0 ? toolRentals : [
               { id: 't1', name: 'Bosch 800W Hammer Drill Set', price: 4500, per: 'day', condition: 'Available', icon: '🔨' },
               { id: 't2', name: '2.8m Telescopic Ladder', price: 2200, per: 'day', condition: 'Rent', icon: '🪜' },
@@ -676,7 +681,7 @@ export default function HomePage() {
               <div
                 key={tool.id}
                 onClick={() => navigate('/marketplace')}
-                className="lf-card flex-shrink-0 w-56 cursor-pointer hover:scale-[1.02] transition-transform"
+                className="lf-card cursor-pointer hover:scale-[1.02] transition-transform"
               >
                 <div className="text-3xl mb-2">{tool.icon}</div>
                 <p className="text-white text-xs font-semibold mb-1 line-clamp-2">{tool.name}</p>

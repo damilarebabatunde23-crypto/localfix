@@ -658,19 +658,19 @@ export default function VideoFeedPage() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg">
+    <div className="min-h-dvh bg-dark-bg">
       {/* Feed tab bar */}
       <div
-        className="sticky top-[64px] z-40 px-3 sm:px-4 py-2 flex items-center justify-between gap-2"
+        className="sticky top-[60px] z-40 px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2"
         style={{ background: 'rgba(23,19,38,0.9)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(167,139,250,0.1)' }}
       >
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar flex-1 min-w-0 py-0.5">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 flex-1 min-w-0 py-0.5">
           {FEED_TABS.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={cn(
-                'flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all',
+                'flex-shrink-0 px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all',
                 activeTab === tab
                   ? 'bg-primary-700 text-white shadow-purple-sm'
                   : 'text-gray-400 hover:text-white'
@@ -684,7 +684,7 @@ export default function VideoFeedPage() {
             </button>
           ))}
         </div>
-        <div className="flex-shrink-0 flex items-center gap-2.5 ml-2">
+        <div className="flex-shrink-0 flex items-center gap-2.5 sm:ml-2">
           <div className="hidden md:flex items-center gap-1.5 text-xs text-gray-400">
             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             <span className="hidden xl:inline">12,800+ CRAFTSMEN ACTIVE / </span>

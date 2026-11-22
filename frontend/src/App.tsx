@@ -56,12 +56,13 @@ export default function App() {
   const showFooter = !NO_FOOTER_ROUTES.some((r) => location.pathname.startsWith(r))
   const isFullHeight = FULL_HEIGHT_ROUTES.some((r) => location.pathname.startsWith(r))
   const isDedicatedChatPage = location.pathname.startsWith('/messages') || location.pathname.startsWith('/chat')
+  const isAuthRoute = location.pathname.startsWith('/login') || location.pathname.startsWith('/register')
 
   return (
-    <div className={`min-h-screen ${isFullHeight ? 'flex flex-col overflow-hidden' : ''}`}>
+    <div className={`min-h-screen min-h-[100dvh] ${isFullHeight ? 'h-screen h-[100dvh] flex flex-col overflow-hidden' : ''}`}>
       <Navbar />
 
-      <main className={isFullHeight ? 'flex-1 overflow-hidden' : ''}>
+      <main className={isFullHeight ? 'flex-1 min-h-0 overflow-hidden' : !showFooter && !isDedicatedChatPage ? 'pb-20 md:pb-0' : ''}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/services" element={<HomePage />} />
@@ -105,7 +106,7 @@ export default function App() {
       </main>
 
       {/* Global Facebook-style Messenger Dock (hidden when on dedicated full-screen /chat or /messages) */}
-      {!isDedicatedChatPage && <FacebookChatDock />}
+      {!isDedicatedChatPage && !isAuthRoute && <FacebookChatDock />}
 
       {/* Global Interactive Audio & Video Call Modal */}
       <ActiveCallModal />

@@ -392,7 +392,7 @@ export default function LiveMediationRoomPage() {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-3 text-center text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 text-center text-xs">
                 <div className="p-2 rounded-xl bg-white/5">
                   <span className="text-[10px] text-gray-400 block">Nominal Voltage</span>
                   <span className="font-mono font-bold text-white">230V</span>
@@ -408,7 +408,7 @@ export default function LiveMediationRoomPage() {
               </div>
 
               {/* Waveform curve visual representation */}
-              <div className="h-10 bg-black/40 rounded-xl p-1.5 flex items-center justify-between px-4 text-[10px] font-mono text-gray-400">
+              <div className="min-h-10 bg-black/40 rounded-xl py-2 px-3 sm:px-4 flex flex-wrap items-center justify-between gap-1.5 text-[10px] font-mono text-gray-400">
                 <span>Steady 230V</span>
                 <span className="text-red-400 font-bold">&darr; Sudden 184V Sag (Inrush Surge)</span>
                 <span className="text-amber-400 font-bold">&times; Inverter Trip</span>

@@ -90,8 +90,8 @@ export default function Footer() {
           background: isDark ? 'rgba(37,28,64,0.4)' : 'rgba(255,255,255,0.6)',
         }}
       >
-        <div className="max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-4 text-xs">
-          <div className="flex flex-wrap items-center gap-6">
+        <div className="max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-3 sm:gap-4 text-xs">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-6">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
                 <ShieldCheck className="w-3.5 h-3.5" />
@@ -121,7 +121,7 @@ export default function Footer() {
           </div>
 
           {/* Quick Location & Currency Pill */}
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
             <button
               type="button"
               onClick={handleQuickGps}
@@ -159,7 +159,7 @@ export default function Footer() {
       </div>
 
       {/* ── Main Footer Grid ── */}
-      <div className="max-w-[1400px] mx-auto px-6 pt-12 pb-10">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-10 sm:pt-12 pb-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand & Mission Column */}
           <div className="lg:col-span-2 space-y-4">
@@ -256,11 +256,11 @@ export default function Footer() {
 
         {/* ── Worldwide Hubs Strip ── */}
         <div
-          className="mt-12 pt-6 pb-4 border-t flex flex-col md:flex-row items-center justify-between gap-4 text-xs"
+          className="mt-10 sm:mt-12 pt-6 pb-4 border-t flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs"
           style={{ borderColor: isDark ? 'rgba(167,139,250,0.12)' : 'rgba(109,40,217,0.12)' }}
         >
-          <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-primary-400" />
+          <div className="flex flex-wrap items-center gap-2">
+            <Globe className="w-4 h-4 text-primary-400 flex-shrink-0" />
             <span className={isDark ? 'text-gray-400 font-medium' : 'text-gray-600 font-semibold'}>
               Global Coverage:
             </span>
@@ -281,21 +281,21 @@ export default function Footer() {
           </div>
 
           <div className="flex items-center gap-2 text-[11px] font-semibold text-emerald-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
             <span>All Global Telemetry Nodes Operational (100% Uptime)</span>
           </div>
         </div>
 
         {/* ── Bottom Legal & Copyright Bar ── */}
         <div
-          className="pt-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs"
+          className="pt-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-center sm:text-left"
           style={{ borderColor: isDark ? 'rgba(167,139,250,0.08)' : 'rgba(109,40,217,0.08)' }}
         >
           <p style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
             © 2026 LocalFix Platform Technologies Inc. All rights reserved. Worldwide Multi-Currency & P2P Trade Network.
           </p>
 
-          <div className="flex items-center gap-4" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
             <Link to="/contact" className="hover:underline transition-colors">
               Privacy Policy
             </Link>

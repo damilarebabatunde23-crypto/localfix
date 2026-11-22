@@ -175,7 +175,7 @@ export default function FacebookChatDock() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="w-[calc(100vw-1.5rem)] sm:w-[380px] h-[480px] max-h-[75vh] sm:max-h-[85vh] rounded-2xl sm:rounded-t-2xl sm:rounded-b-none flex flex-col overflow-hidden shadow-2xl"
+            className="w-[calc(100vw-1.5rem)] max-w-[380px] sm:w-[380px] h-[480px] max-h-[75dvh] sm:max-h-[85dvh] rounded-2xl sm:rounded-t-2xl sm:rounded-b-none flex flex-col overflow-hidden shadow-2xl"
             style={{
               background: '#160F29',
               border: '1.5px solid rgba(167, 139, 250, 0.25)',

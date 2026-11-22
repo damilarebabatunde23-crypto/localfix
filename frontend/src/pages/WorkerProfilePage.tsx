@@ -334,7 +334,7 @@ export default function WorkerProfilePage() {
               </div>
 
               {/* Core Metric Counters */}
-              <div className="grid grid-cols-4 gap-2.5 mt-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-4">
                 {[
                   {
                     label: 'Rating',

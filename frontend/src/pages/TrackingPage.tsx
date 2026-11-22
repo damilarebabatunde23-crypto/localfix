@@ -90,10 +90,10 @@ export default function TrackingPage() {
   const artisanLng = bookingData?.worker_current_longitude || (customerLng - 0.015)
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white pb-24 pt-6">
-      <div className="max-w-5xl mx-auto px-4">
+    <div className="min-h-dvh bg-dark-bg text-white pb-24 pt-6">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4">
         {/* Navigation Breadcrumb */}
-        <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 mb-6">
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors cursor-pointer"
@@ -176,8 +176,8 @@ export default function TrackingPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 text-xs">
             <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
               <span className="text-[10px] uppercase text-gray-400 font-bold block">Assigned Technician</span>
-              <span className="font-bold text-white line-clamp-1">{worker.displayName}</span>
-              <span className="text-[10px] text-primary-300 block">{worker.profession}</span>
+              <span className="font-bold text-white line-clamp-1">{worker?.displayName || 'Verified Artisan'}</span>
+              <span className="text-[10px] text-primary-300 block">{worker?.profession || 'On-Demand Specialist'}</span>
             </div>
             <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
               <span className="text-[10px] uppercase text-gray-400 font-bold block">Customer Doorstep</span>

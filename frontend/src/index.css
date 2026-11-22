@@ -14,7 +14,14 @@
     --color-soft: #EDE9FE;
     --color-dark-bg: #171326;
     --color-light-bg: #FAF9FF;
+    --target-size: 24px;
     color-scheme: dark light;
+  }
+
+  @media (pointer: coarse) {
+    :root {
+      --target-size: 44px;
+    }
   }
 
   * {
@@ -23,6 +30,8 @@
 
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: calc(68px + env(safe-area-inset-top, 0px));
+    scroll-padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
   }
 
   body {
@@ -30,7 +39,50 @@
     background-color: #ffffff;
     color: #111111;
     @apply dark:bg-dark-bg dark:text-gray-100;
+    overflow-wrap: break-word;
     transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Responsive media, wrapping, typography & touch targets */
+  :where(img, video) {
+    max-inline-size: 100%;
+  }
+
+  :where(a, code) {
+    overflow-wrap: anywhere;
+  }
+
+  :where(h1, h2, h3) {
+    text-wrap: balance;
+  }
+
+  :where(p, li) {
+    text-wrap: pretty;
+  }
+
+  :where(nav a, nav button, header button) {
+    min-block-size: var(--target-size);
+    min-inline-size: var(--target-size);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Keep Leaflet zoom buttons clear of the floating map controls on phones */
+  @media (max-width: 639px) {
+    .leaflet-top.leaflet-left {
+      margin-top: 132px;
+    }
+    .leaflet-bottom.leaflet-right {
+      margin-bottom: 4px;
+    }
+  }
+
+  .safe-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+    padding-left: max(0.5rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.5rem, env(safe-area-inset-right, 0px));
   }
 
   /* Custom scrollbar */

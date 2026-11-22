@@ -22,10 +22,21 @@ import {
 import { MOCK_WORKERS, formatCurrency } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
+const FALLBACK_DISPUTE_WORKER = {
+  id: 'verified-pro',
+  displayName: 'Verified LocalFix Artisan',
+  profession: 'Master Electrical & Solar Specialist',
+  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=LocalFixPro&backgroundColor=6D28D9',
+  rating: 4.9,
+  reviewCount: 48,
+  completedJobs: 112,
+  verificationBadge: 'Verified Pro',
+}
+
 export default function DisputeMediationPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [worker, setWorker] = useState<any>(() => MOCK_WORKERS.find((w) => w.id === id) ?? null)
+  const [worker, setWorker] = useState<any>(() => MOCK_WORKERS.find((w) => w.id === id) ?? FALLBACK_DISPUTE_WORKER)
 
   const [activeAction, setActiveAction] = useState<string | null>(null)
 

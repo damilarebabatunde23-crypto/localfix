@@ -185,31 +185,31 @@ export default function AIAssistantPage() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
+    <div className="h-[calc(100dvh-60px)] bg-dark-bg flex flex-col overflow-hidden">
       {/* Top Header Bar */}
       <div
-        className="px-4 py-3.5 flex items-center justify-between gap-3 border-b border-white/10"
+        className="px-3 sm:px-4 py-3 flex flex-wrap items-center justify-between gap-2.5 border-b border-white/10"
         style={{ background: 'rgba(23,19,38,0.85)', backdropFilter: 'blur(16px)' }}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
           <div
-            className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-glow-sm"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shadow-glow-sm flex-shrink-0"
             style={{ background: 'linear-gradient(135deg,#6D28D9,#7C3AED)' }}
           >
             <Sparkles className="w-5 h-5 text-white" />
           </div>
-          <div>
-            <h1 className="text-white font-bold text-base flex items-center gap-2">
-              <span>LocalFix AI Trade Copilot</span>
+          <div className="min-w-0">
+            <h1 className="text-white font-bold text-sm sm:text-base flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <span className="truncate">LocalFix AI Trade Copilot</span>
               <span className="lf-badge-purple text-[10px]">Worldwide</span>
             </h1>
-            <p className="text-gray-400 text-xs">
-              Instant Technical Triage, Fault Analysis & Dynamic Pricing in {currency}
+            <p className="text-gray-400 text-[11px] sm:text-xs line-clamp-1">
+              Instant Technical Triage, Fault Analysis &amp; Dynamic Pricing in {currency}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0 max-w-full">
           <Link
             to="/tracking"
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-600/30 transition-colors"
@@ -217,9 +217,9 @@ export default function AIAssistantPage() {
             <Radio className="w-3.5 h-3.5 animate-pulse" />
             <span>Live Tracker</span>
           </Link>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-xs text-gray-300">
-            <MapPin className="w-3.5 h-3.5 text-primary-400" />
-            <span className="max-w-[130px] truncate">{locationName || 'Worldwide'}</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-xs text-gray-300 max-w-full">
+            <MapPin className="w-3.5 h-3.5 text-primary-400 flex-shrink-0" />
+            <span className="max-w-[120px] sm:max-w-[160px] truncate">{locationName || 'Worldwide'}</span>
           </div>
         </div>
       </div>

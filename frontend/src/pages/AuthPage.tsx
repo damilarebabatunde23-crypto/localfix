@@ -313,12 +313,13 @@ export default function AuthPage() {
       const btnContainer = document.getElementById(btnId)
       if (btnContainer) {
         btnContainer.innerHTML = ''
+        const btnWidth = Math.min(360, Math.max(240, window.innerWidth - 72))
         g.accounts.id.renderButton(btnContainer, {
           theme: 'outline',
           size: 'large',
           text: mode === 'register' ? 'signup_with' : 'continue_with',
           shape: 'pill',
-          width: 380,
+          width: btnWidth,
         })
       }
     } catch (err) {
@@ -727,8 +728,8 @@ export default function AuthPage() {
           </div>
 
           {/* Interactive Fixer Video Controls Pill */}
-          <div className="flex items-center justify-between sm:justify-end gap-3 text-[11px]">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-white shadow-md">
+          <div className="flex items-center justify-start sm:justify-end gap-2 text-[11px] max-w-full">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-2xl sm:rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-white shadow-md max-w-full">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
@@ -828,10 +829,10 @@ export default function AuthPage() {
         </div>
 
         {/* Main 2-Column Layout */}
-        <div className="grid lg:grid-cols-12 gap-8 items-start max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start max-w-6xl mx-auto">
 
-          {/* ── LEFT: Brand / Social Proof ── */}
-          <div className="lg:col-span-6 space-y-6">
+          {/* ── LEFT: Brand / Social Proof (shown BELOW the form on phones) ── */}
+          <div className="order-2 lg:order-1 lg:col-span-6 space-y-6 min-w-0 rounded-3xl bg-black/45 backdrop-blur-md p-4 sm:p-5 lg:bg-transparent lg:backdrop-blur-none lg:p-0">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold text-primary-300 bg-primary-700/20 border border-primary-500/30">
               <ShieldCheck className="w-3.5 h-3.5 text-primary-400" />
               CBN SANDBOX ALIGNED • Zero Fraud Escrow
@@ -935,7 +936,7 @@ export default function AuthPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-6 text-xs text-gray-500">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-gray-400">
               <span className="flex items-center gap-1.5">
                 <Building className="w-3.5 h-3.5 text-primary-400" /> NDIC-Insured Settlement
               </span>
@@ -946,8 +947,8 @@ export default function AuthPage() {
           </div>
 
           {/* ── RIGHT: Auth Card ── */}
-          <div className="lg:col-span-6">
-            <div className={`bg-[#0E0C17]/85 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 ${mode === 'register' ? 'max-w-xl' : 'max-w-md'} mx-auto border border-white/20 shadow-2xl transition-all duration-300`}>
+          <div className="order-1 lg:order-2 lg:col-span-6 min-w-0 w-full">
+            <div className={`bg-[#0E0C17]/90 backdrop-blur-2xl rounded-3xl p-4 min-[400px]:p-6 sm:p-8 w-full ${mode === 'register' ? 'max-w-xl' : 'max-w-md'} mx-auto border border-white/20 shadow-2xl transition-all duration-300`}>
 
               {/* Mode Tabs (Login / Register) */}
               {mode !== 'forgot' && (

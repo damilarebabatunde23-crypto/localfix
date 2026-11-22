@@ -106,7 +106,7 @@ export default function AppDownloadPage() {
             </p>
 
             {/* Quick Metrics */}
-            <div className="grid grid-cols-3 gap-3 pt-2 max-w-lg">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 max-w-lg">
               <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10">
                 <div className="text-2xl font-black text-white flex items-center gap-1">
                   <span>4.9</span>

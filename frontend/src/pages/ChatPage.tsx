@@ -21,6 +21,7 @@ import {
   FileText,
   MessageCircle,
   MessageSquare,
+  X,
 } from 'lucide-react'
 import { MOCK_WORKERS, normalizeWorker } from '@/lib/utils'
 import { chatApi, uploadApi, servicesApi } from '@/lib/api'
@@ -109,14 +110,20 @@ export default function ChatPage() {
           unread: c.unread_count || 0,
         }))
 
-        // Deduplicate any repeat conversations by participant user ID
-        const seenUserIds = new Set<string>()
-        mapped = mapped.filter((t: any) => {
-          if (!t.user.id) return true
-          if (seenUserIds.has(t.user.id)) return false
-          seenUserIds.add(t.user.id)
-          return true
-        })
+        // Deduplicate any repeat conversations by participant user ID or name
+        const seenKeys = new Set<string>()
+        const cleanMapped: any[] = []
+        for (const t of mapped) {
+          const keyId = t.user.id ? `id:${t.user.id}` : null
+          const keyName = t.user.name && t.user.name !== 'LocalFix User' ? `name:${t.user.name.toLowerCase().trim()}` : null
+          if ((keyId && seenKeys.has(keyId)) || (keyName && seenKeys.has(keyName))) {
+            continue
+          }
+          if (keyId) seenKeys.add(keyId)
+          if (keyName) seenKeys.add(keyName)
+          cleanMapped.push(t)
+        }
+        mapped = cleanMapped
 
         // If workerParam is provided: check if conversation already exists or start one!
         if (workerParam) {
@@ -264,14 +271,20 @@ export default function ChatPage() {
               }
             })
 
-            // Deduplicate by user id
-            const seen = new Set<string>()
-            return mapped.filter((t: any) => {
-              if (!t.user.id) return true
-              if (seen.has(t.user.id)) return false
-              seen.add(t.user.id)
-              return true
-            })
+            // Deduplicate by participant user ID or name
+            const seenKeys = new Set<string>()
+            const cleanMapped: any[] = []
+            for (const t of mapped) {
+              const keyId = t.user.id ? `id:${t.user.id}` : null
+              const keyName = t.user.name && t.user.name !== 'LocalFix User' ? `name:${t.user.name.toLowerCase().trim()}` : null
+              if ((keyId && seenKeys.has(keyId)) || (keyName && seenKeys.has(keyName))) {
+                continue
+              }
+              if (keyId) seenKeys.add(keyId)
+              if (keyName) seenKeys.add(keyName)
+              cleanMapped.push(t)
+            }
+            return cleanMapped
           })
         }
       } catch {}
@@ -342,7 +355,7 @@ export default function ChatPage() {
   )
 
   return (
-    <div className="flex bg-[#0f0b1a] text-white overflow-hidden h-[calc(100dvh-64px)] w-full">
+    <div className="flex bg-[#0f0b1a] text-white overflow-hidden h-[calc(100dvh-60px)] w-full relative">
       {/* ======================================================== */}
       {/* 1. LEFT SIDEBAR: Facebook Messenger Conversations List   */}
       {/* ======================================================== */}
@@ -478,6 +491,7 @@ export default function ChatPage() {
                   onClick={() => {
                     setSelectedThreadId(thread.id)
                     setMobileView('chat')
+                    useChatStore.setState({ messages: [] })
                     // Clear unread badge locally immediately
                     setThreads((prev) =>
                       prev.map((t) => (t.id === thread.id ? { ...t, unread: 0 } : t))
@@ -940,12 +954,28 @@ export default function ChatPage() {
       {/* ======================================================== */}
       <AnimatePresence>
         {showRightPanel && currentCounterpart && (
-          <motion.div
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            className="hidden lg:flex flex-col border-l border-primary-500/15 bg-[#151025] overflow-y-auto no-scrollbar p-5"
-          >
+          <>
+            {/* Mobile/tablet backdrop */}
+            <div
+              onClick={() => setShowRightPanel(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs z-30 lg:hidden"
+            />
+            <motion.div
+              initial={{ x: 40, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 40, opacity: 0 }}
+              className="fixed lg:static top-[60px] bottom-0 right-0 z-40 w-[min(320px,88vw)] lg:w-80 flex-shrink-0 flex flex-col border-l border-primary-500/15 bg-[#151025] overflow-y-auto no-scrollbar p-5 shadow-2xl lg:shadow-none"
+            >
+              {/* Mobile close button */}
+              <div className="flex justify-end lg:hidden mb-2">
+                <button
+                  onClick={() => setShowRightPanel(false)}
+                  aria-label="Close conversation details"
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             {/* Profile Avatar & Info */}
             <div className="flex flex-col items-center text-center pb-5 border-b border-white/5">
               <div className="relative mb-3">
@@ -1000,6 +1030,7 @@ export default function ChatPage() {
               🔒 All conversations are encrypted and timestamped for dispute evidence. Keep communication on LocalFix to preserve full escrow protection.
             </div>
           </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>

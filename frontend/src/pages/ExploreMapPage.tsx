@@ -210,21 +210,21 @@ export default function ExploreMapPage() {
   })
 
   return (
-    <div className="min-h-screen bg-dark-bg">
+    <div className="min-h-dvh bg-dark-bg pb-20 md:pb-0">
       {/* Sub-header */}
-      <div className="px-4 py-3 flex items-center justify-between"
+      <div className="px-3 sm:px-4 py-3 flex flex-wrap items-center justify-between gap-2.5"
         style={{ borderBottom: '1px solid rgba(167,139,250,0.1)' }}>
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-1.5 text-sm text-primary-300"
-            style={{ background: 'rgba(109,40,217,0.1)', border: '1px solid rgba(109,40,217,0.2)', borderRadius: '12px', padding: '6px 12px' }}>
-            <MapPin className="w-3.5 h-3.5" />
-            {locationName}
-            <span className="lf-badge-green text-[10px] ml-1">42 Pros Nearby</span>
+        <div className="flex items-center gap-2 min-w-0 max-w-full">
+          <button className="flex items-center gap-1.5 text-xs sm:text-sm text-primary-300 min-w-0 max-w-full"
+            style={{ background: 'rgba(109,40,217,0.1)', border: '1px solid rgba(109,40,217,0.2)', borderRadius: '12px', padding: '6px 10px' }}>
+            <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate max-w-[140px] sm:max-w-[220px]">{locationName}</span>
+            <span className="lf-badge-green text-[10px] ml-1 flex-shrink-0 hidden xs:inline-flex">42 Pros Nearby</span>
           </button>
         </div>
 
-        {/* Search */}
-        <div className="flex-1 max-w-md mx-4 hidden md:block relative">
+        {/* Search (visible on ALL screen sizes, full width on mobile) */}
+        <div className="order-3 md:order-2 w-full md:flex-1 md:max-w-md md:mx-4 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
           <input
             type="text"
@@ -237,7 +237,7 @@ export default function ExploreMapPage() {
         </div>
 
         {/* View mode toggle */}
-        <div className="flex items-center gap-1 rounded-xl p-1" style={{ background: 'rgba(37,28,64,0.6)', border: '1px solid rgba(167,139,250,0.15)' }}>
+        <div className="order-2 md:order-3 flex items-center gap-1 rounded-xl p-1 flex-wrap" style={{ background: 'rgba(37,28,64,0.6)', border: '1px solid rgba(167,139,250,0.15)' }}>
           {VIEW_MODES.map((mode) => {
             const Icon = mode.icon
             return (
@@ -245,16 +245,16 @@ export default function ExploreMapPage() {
                 key={mode.id}
                 onClick={() => setViewMode(mode.id as typeof viewMode)}
                 className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
+                  'flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
                   viewMode === mode.id ? 'bg-primary-700 text-white' : 'text-gray-400 hover:text-gray-200'
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
-                <span className="hidden sm:block">{mode.label}</span>
+                <span className="hidden sm:inline">{mode.label}</span>
               </button>
             )
           })}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-green-400 font-medium">
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-green-400 font-medium">
             <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
             28 Live Now
           </div>
@@ -262,13 +262,13 @@ export default function ExploreMapPage() {
       </div>
 
       {/* Main content */}
-      <div className="flex h-[calc(100vh-140px)]">
+      <div className="flex flex-col md:flex-row md:h-[calc(100dvh-132px)]">
         {/* Left: filters + worker list */}
         {viewMode !== 'map' && (
           <motion.aside
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            className="w-full md:w-[340px] flex-shrink-0 overflow-y-auto no-scrollbar"
+            className="w-full md:w-[340px] lg:w-[360px] flex-shrink-0 md:overflow-y-auto no-scrollbar order-2 md:order-1"
             style={{ borderRight: '1px solid rgba(167,139,250,0.1)' }}
           >
             <div className="p-4">
@@ -442,19 +442,19 @@ export default function ExploreMapPage() {
 
         {/* Right: Map */}
         {viewMode !== 'list' && (
-          <div className="flex-1 relative h-[calc(100vh-120px)] min-h-[500px]">
+          <div className="w-full md:flex-1 relative h-[52dvh] min-h-[340px] md:h-full order-1 md:order-2 overflow-hidden">
             {/* Real Map Floating Controls */}
-            <div className="absolute top-4 right-4 z-[1000] flex flex-wrap items-center justify-end gap-2 max-w-[95%]">
+            <div className="absolute top-2.5 left-2.5 right-2.5 sm:left-auto sm:top-4 sm:right-4 z-[1000] flex flex-wrap items-center justify-end gap-1.5 sm:gap-2 max-w-full">
               {/* Global City / Region Switcher */}
-              <div className="glass-panel rounded-2xl p-1.5 flex items-center gap-1.5 shadow-2xl border border-white/20 bg-dark-card/90 backdrop-blur-md">
-                <div className="flex items-center gap-1 px-2 py-1 text-xs font-semibold text-primary-300">
+              <div className="glass-panel rounded-2xl p-1 sm:p-1.5 flex items-center gap-1 shadow-2xl border border-white/20 bg-dark-card/90 backdrop-blur-md max-w-full">
+                <div className="flex items-center gap-1 px-1.5 sm:px-2 py-1 text-xs font-semibold text-primary-300 flex-shrink-0">
                   <Globe className="w-3.5 h-3.5 text-primary-400" />
                   <span className="hidden sm:inline">Region:</span>
                 </div>
                 <select
                   value={currentHubName}
                   onChange={(e) => handleSelectHub(e.target.value)}
-                  className="bg-black/50 border border-white/10 rounded-xl px-2.5 py-1 text-xs font-bold text-white focus:outline-none focus:border-primary-500 cursor-pointer"
+                  className="bg-black/50 border border-white/10 rounded-xl px-2 py-1 text-xs font-bold text-white focus:outline-none focus:border-primary-500 cursor-pointer max-w-[175px] sm:max-w-none truncate"
                 >
                   {WORLD_HUBS.map((hub) => (
                     <option key={hub.name} value={hub.name} className="bg-gray-900 text-white">
@@ -465,13 +465,13 @@ export default function ExploreMapPage() {
               </div>
 
               {/* Tile Style Picker */}
-              <div className="glass-panel rounded-2xl p-1.5 flex items-center gap-1 shadow-2xl border border-white/20 bg-dark-card/90 backdrop-blur-md">
+              <div className="glass-panel rounded-2xl p-1 sm:p-1.5 flex flex-wrap items-center gap-1 shadow-2xl border border-white/20 bg-dark-card/90 backdrop-blur-md max-w-full">
                 {(Object.keys(TILE_PROVIDERS) as TileStyleKey[]).map((styleKey) => (
                   <button
                     key={styleKey}
                     onClick={() => setTileStyle(styleKey)}
                     className={cn(
-                      'px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
+                      'px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer',
                       tileStyle === styleKey
                         ? 'bg-primary-700 text-white shadow-glow-sm'
                         : 'text-gray-300 hover:text-white hover:bg-white/10'
@@ -486,10 +486,11 @@ export default function ExploreMapPage() {
               <button
                 type="button"
                 onClick={handleLocateUser}
-                className="glass-panel px-3.5 py-2 rounded-xl text-xs font-bold text-white flex items-center gap-2 hover:bg-primary-700/30 transition-all border border-white/20 shadow-lg bg-dark-card/90 backdrop-blur-md cursor-pointer"
+                aria-label="Locate me with GPS"
+                className="glass-panel px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold text-white flex items-center gap-2 hover:bg-primary-700/30 transition-all border border-white/20 shadow-lg bg-dark-card/90 backdrop-blur-md cursor-pointer"
               >
                 <Crosshair className="w-4 h-4 text-emerald-400 animate-pulse" />
-                <span>Locate Me (GPS)</span>
+                <span className="hidden min-[420px]:inline">Locate Me (GPS)</span>
               </button>
             </div>
 
@@ -589,7 +590,7 @@ export default function ExploreMapPage() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: 20, opacity: 0 }}
-                  className="absolute bottom-4 left-4 right-4 z-[1000]"
+                  className="absolute bottom-6 left-2.5 right-2.5 sm:left-4 sm:right-4 z-[1000]"
                   style={{ maxWidth: '440px', margin: '0 auto' }}
                 >
                   <div className="glass-panel rounded-2xl p-4">
@@ -630,7 +631,7 @@ export default function ExploreMapPage() {
             </AnimatePresence>
 
             {/* Zone notification */}
-            <div className="absolute top-4 left-4 z-[1000]">
+            <div className="hidden md:block absolute top-4 left-4 z-[1000]">
               <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-white font-medium"
                 style={{ background: 'rgba(23,19,38,0.85)', backdropFilter: 'blur(12px)', border: '1px solid rgba(167,139,250,0.2)' }}>
                 <div className="flex -space-x-1">
@@ -650,15 +651,15 @@ export default function ExploreMapPage() {
       {/* Bottom Escrow guarantee bar */}
       <div className="px-4 py-3"
         style={{ borderTop: '1px solid rgba(167,139,250,0.1)', background: 'rgba(23,19,38,0.6)' }}>
-        <div className="max-w-[1400px] mx-auto flex items-center gap-3">
+        <div className="max-w-[1400px] mx-auto flex flex-wrap items-center gap-x-3 gap-y-2">
           <div className="w-8 h-8 rounded-full bg-primary-700/30 flex items-center justify-center flex-shrink-0">
             <Shield className="w-4 h-4 text-primary-400" />
           </div>
-          <div>
+          <div className="flex-1 min-w-[200px]">
             <div className="text-white text-sm font-semibold">LocalFix 100% Escrow & Neighborhood Guarantee</div>
             <div className="text-gray-400 text-xs">Funds are only released to technicians once your work inspection checklist is signed off.</div>
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="md:ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 pl-11 md:pl-0">
             <span className="text-gray-500 text-xs">Identity Verified with NIM & Trade Union Registry</span>
             <button className="text-primary-400 text-xs font-medium hover:text-primary-300">Learn More →</button>
           </div>

@@ -82,9 +82,9 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50">
+      <header className="fixed top-0 left-0 right-0 z-50 safe-top">
         <div
-          className="px-4"
+          className="px-2.5 sm:px-4"
           style={{
             background: navbarBg,
             backdropFilter: 'blur(20px) saturate(180%)',
@@ -93,10 +93,10 @@ export default function Navbar() {
             boxShadow: navbarShadow,
           }}
         >
-          <div className="max-w-[1400px] mx-auto h-[60px] flex items-center gap-2">
+          <div className="max-w-[1400px] mx-auto h-[60px] flex items-center gap-1.5 sm:gap-2">
 
             {/* ── Logo ── */}
-            <Link to="/" className="flex items-center gap-2 flex-shrink-0 group mr-2">
+            <Link to="/" className="flex items-center gap-2 flex-shrink-0 group mr-1 sm:mr-2">
               <div className={cn(
                 'w-9 h-9 rounded-xl overflow-hidden border flex-shrink-0',
                 isDark ? 'border-primary-500/30 bg-[#221f28]' : 'border-primary-400/40 bg-white'
@@ -239,38 +239,40 @@ export default function Navbar() {
             <Link
               to="/assistant"
               className={cn(
-                'hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-glow-sm cursor-pointer',
+                'hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-glow-sm cursor-pointer flex-shrink-0',
                 isDark
                   ? 'bg-primary-700/25 hover:bg-primary-700 text-primary-300 hover:text-white border border-primary-500/30'
                   : 'bg-primary-50 hover:bg-primary-600 text-primary-700 hover:text-white border border-primary-200'
               )}
               title="Open AI Technical Diagnostic Copilot"
             >
-              <Sparkles className="w-3.5 h-3.5 text-primary-400 animate-spin" style={{ animationDuration: '6s' }} />
+              <Sparkles className="w-3.5 h-3.5 text-primary-400 animate-spin" style={{ animationDuration: '6s' }} aria-hidden="true" />
               <span>AI Copilot</span>
             </Link>
 
             {/* ── Compact icon group ── */}
             <div className={cn(
-              'flex items-center rounded-xl divide-x overflow-hidden',
+              'flex items-center rounded-xl divide-x overflow-hidden flex-shrink-0',
               isDark ? 'divide-white/8 bg-white/5 border border-white/8' : 'divide-gray-200 bg-gray-50 border border-gray-200'
             )}>
               {/* Theme toggle */}
               <button
                 onClick={toggleTheme}
-                className={cn('p-2 transition-colors', isDark ? 'text-gray-400 hover:text-white hover:bg-white/8' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100')}
+                aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                className={cn('p-2 transition-colors flex items-center justify-center', isDark ? 'text-gray-400 hover:text-white hover:bg-white/8' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100')}
                 title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               >
-                {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                {isDark ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
               </button>
 
               {/* Notifications */}
               <button
                 onClick={() => navigate('/profile?tab=notifications')}
+                aria-label="View Notifications"
                 title="View Notifications"
-                className={cn('relative p-2 transition-colors cursor-pointer', isDark ? 'text-gray-400 hover:text-white hover:bg-white/8' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100')}
+                className={cn('relative p-2 transition-colors cursor-pointer flex items-center justify-center', isDark ? 'text-gray-400 hover:text-white hover:bg-white/8' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100')}
               >
-                <Bell className="w-4 h-4" />
+                <Bell className="w-4 h-4" aria-hidden="true" />
                 {unreadNotifications > 0 && (
                   <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                 )}
@@ -290,10 +292,11 @@ export default function Navbar() {
                     chatStore.toggleMinimize()
                   }
                 }}
+                aria-label="Open Messenger Chat Box"
                 title="Open Messenger Chat Box"
-                className={cn('relative p-2 transition-colors cursor-pointer', isDark ? 'text-gray-400 hover:text-white hover:bg-white/8' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100')}
+                className={cn('relative p-2 transition-colors cursor-pointer flex items-center justify-center', isDark ? 'text-gray-400 hover:text-white hover:bg-white/8' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100')}
               >
-                <MessageSquare className="w-4 h-4" />
+                <MessageSquare className="w-4 h-4" aria-hidden="true" />
                 {unreadMessages > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#7C3AED] text-white text-[9px] font-bold flex items-center justify-center animate-pulse">
                     {unreadMessages}
@@ -301,19 +304,6 @@ export default function Navbar() {
                 )}
               </button>
             </div>
-
-            {/* ── AI Assistant CTA ── */}
-            <button
-              onClick={() => navigate('/assistant')}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200"
-              style={{
-                background: 'linear-gradient(135deg,#6D28D9,#7C3AED)',
-                color: 'white',
-              }}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              AI
-            </button>
 
             {/* ── Profile / Auth area ── */}
             {isAuthenticated && user ? (
@@ -429,10 +419,12 @@ export default function Navbar() {
 
             {/* ── Mobile hamburger ── */}
             <button
-              className={cn('lg:hidden p-2 rounded-xl transition-colors', isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')}
+              aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={mobileOpen}
+              className={cn('lg:hidden p-2 rounded-xl transition-colors flex items-center justify-center flex-shrink-0', isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')}
               onClick={() => setMobileOpen(!mobileOpen)}
             >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {mobileOpen ? <X className="w-5 h-5" aria-hidden="true" /> : <Menu className="w-5 h-5" aria-hidden="true" />}
             </button>
           </div>
         </div>
@@ -444,14 +436,14 @@ export default function Navbar() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="lg:hidden overflow-hidden"
+              className="lg:hidden overflow-y-auto overscroll-contain max-h-[calc(100dvh-60px)]"
               style={{
                 background: isDark ? 'rgba(23,19,38,0.98)' : 'rgba(255,255,255,0.98)',
                 backdropFilter: 'blur(20px)',
                 borderBottom: isDark ? '1px solid rgba(167,139,250,0.12)' : '1px solid rgba(109,40,217,0.1)',
               }}
             >
-              <nav className="max-w-[1400px] mx-auto px-4 py-3 flex flex-col gap-1">
+              <nav aria-label="Mobile navigation" className="max-w-[1400px] mx-auto px-4 pt-3 pb-8 flex flex-col gap-1">
                 {ALL_NAV.map((link) => (
                   <Link
                     key={link.path}
@@ -470,6 +462,32 @@ export default function Navbar() {
                   </Link>
                 ))}
                 <div className={cn('h-px my-1', isDark ? 'bg-white/8' : 'bg-gray-100')} />
+                {/* Mobile Currency Switcher */}
+                <div className="flex items-center justify-between gap-3 px-4 py-2">
+                  <span className={cn('text-xs font-semibold', isDark ? 'text-gray-400' : 'text-gray-600')}>Currency</span>
+                  <select
+                    value={currency || 'USD'}
+                    onChange={(e) => {
+                      setCurrency(e.target.value)
+                      toast.success(`Currency switched to ${e.target.value}`)
+                    }}
+                    className={cn(
+                      'px-3 py-1.5 rounded-xl text-xs font-bold outline-none cursor-pointer',
+                      isDark
+                        ? 'text-white bg-primary-700/20 border border-primary-500/30'
+                        : 'text-gray-900 bg-primary-50 border border-primary-200'
+                    )}
+                    aria-label="Change Global Currency"
+                  >
+                    <option value="USD" className="bg-[#1e1533] text-white">$ USD</option>
+                    <option value="EUR" className="bg-[#1e1533] text-white">€ EUR</option>
+                    <option value="GBP" className="bg-[#1e1533] text-white">£ GBP</option>
+                    <option value="NGN" className="bg-[#1e1533] text-white">₦ NGN</option>
+                    <option value="CAD" className="bg-[#1e1533] text-white">$ CAD</option>
+                    <option value="AUD" className="bg-[#1e1533] text-white">$ AUD</option>
+                    <option value="KES" className="bg-[#1e1533] text-white">KSh KES</option>
+                  </select>
+                </div>
                 <button
                   onClick={() => {
                     setMobileOpen(false)

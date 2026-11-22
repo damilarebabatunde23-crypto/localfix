@@ -261,36 +261,38 @@ export default function MarketplacePage() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg">
+    <div className="min-h-dvh bg-dark-bg">
       {/* Safety notice banner */}
-      <div className="px-4 py-3"
+      <div className="px-3 sm:px-4 py-3"
         style={{ background: 'rgba(109,40,217,0.1)', borderBottom: '1px solid rgba(167,139,250,0.12)' }}>
-        <div className="max-w-[1400px] mx-auto flex items-start gap-3">
-          <div className="w-8 h-8 rounded-xl bg-primary-700/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Shield className="w-4 h-4 text-primary-400" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-white font-bold text-sm">LocalFix Marketplace Safety Notice</span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold text-primary-300"
-                style={{ background: 'rgba(109,40,217,0.3)', border: '1px solid rgba(109,40,217,0.4)' }}>
-                P2P Direct Trade
-              </span>
+        <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row sm:items-start gap-2.5 sm:gap-3">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-primary-700/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Shield className="w-4 h-4 text-primary-400" />
             </div>
-            <p className="text-gray-400 text-xs">
-              Connect and buy/sell tools, appliances, and materials locally. Items are independent of service-booking escrow—arrange pickup inspection and settlement directly with verified neighbors.
-            </p>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                <span className="text-white font-bold text-sm">LocalFix Marketplace Safety Notice</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold text-primary-300"
+                  style={{ background: 'rgba(109,40,217,0.3)', border: '1px solid rgba(109,40,217,0.4)' }}>
+                  P2P Direct Trade
+                </span>
+              </div>
+              <p className="text-gray-400 text-xs">
+                Connect and buy/sell tools, appliances, and materials locally. Items are independent of service-booking escrow—arrange pickup inspection and settlement directly with verified neighbors.
+              </p>
+            </div>
           </div>
-          <button className="flex items-center gap-1 text-primary-400 text-xs font-medium hover:text-primary-300 transition-colors flex-shrink-0">
+          <button className="self-start sm:self-center flex items-center gap-1 text-primary-400 text-xs font-medium hover:text-primary-300 transition-colors flex-shrink-0">
             Safety Guidelines →
           </button>
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-4 py-6">
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-5 sm:py-6">
         {/* Search + Post CTA */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex-1 relative">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 mb-4">
+          <div className="flex-1 relative min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-400" />
             <input
               type="text"
@@ -300,28 +302,28 @@ export default function MarketplacePage() {
               className="w-full pl-10 pr-10 py-3 rounded-xl text-sm outline-none"
               style={{ background: 'rgba(37,28,64,0.6)', border: '1px solid rgba(167,139,250,0.2)', color: '#e2e0ff' }}
             />
-            <button className="absolute right-3 top-1/2 -translate-y-1/2">
+            <button className="absolute right-3 top-1/2 -translate-y-1/2" aria-label="Voice search">
               <Mic className="w-4 h-4 text-gray-500" />
             </button>
           </div>
           <button
             onClick={() => setPostModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-white flex-shrink-0 transition-all cursor-pointer"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-white flex-shrink-0 transition-all cursor-pointer"
             style={{ background: 'linear-gradient(135deg,#6D28D9,#7C3AED)', boxShadow: '0 4px 16px rgba(109,40,217,0.4)' }}
           >
             <Plus className="w-4 h-4" />
-            + Post an Item for Sale
+            Post an Item for Sale
           </button>
         </div>
 
         {/* Category tabs */}
-        <div className="flex items-center gap-2 mb-4 overflow-x-auto no-scrollbar">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-4">
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               className={cn(
-                'flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-medium transition-all',
+                'flex-shrink-0 px-3 sm:px-3.5 py-2 rounded-xl text-xs font-medium transition-all',
                 selectedCategory === cat ? 'bg-primary-700 text-white' : 'text-gray-400 hover:text-gray-200'
               )}
               style={{ background: selectedCategory === cat ? undefined : 'rgba(37,28,64,0.5)', border: '1px solid rgba(167,139,250,0.15)' }}
@@ -777,7 +779,7 @@ export default function MarketplacePage() {
                   />
 
                   {photoPreviews.length > 0 ? (
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {photoPreviews.map((src, idx) => (
                         <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-primary-500/30 group">
                           <img src={src} alt="Preview" className="w-full h-full object-cover" />

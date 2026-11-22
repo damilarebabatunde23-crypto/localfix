@@ -94,7 +94,7 @@ export default function IndependentAuditPage() {
               </div>
 
               {/* 3 Metrics */}
-              <div className="grid grid-cols-3 gap-3 pt-2 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
                 <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10">
                   <span className="text-[10px] text-gray-400 block uppercase tracking-wider">
                     Frozen Escrow Custody
